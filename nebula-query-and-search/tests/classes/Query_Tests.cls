@@ -38,7 +38,8 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_for_a_simple_query() {
+  static void it_should_return_results_for_a_simple_query()
+  {
     String expectedQueryString = 'SELECT Id, Name FROM Account';
 
     Query simpleAccountQuery = new Query(Schema.Account.SObjectType);
@@ -48,7 +49,8 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_should_correctly_represent_sets_in_query_filters() {
+  static void it_should_correctly_represent_sets_in_query_filters()
+  {
     String expectedName = 'someName';
     String expectedQueryString = 'SELECT Id, Name FROM Account WHERE Name IN (\'' + expectedName + '\')';
 
@@ -60,7 +62,8 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_for_an_advanced_query() {
+  static void it_should_return_results_for_an_advanced_query()
+  {
     Datetime now = System.now();
     String expectedQueryString =
       'SELECT Alias, Email, Id, IsActive, Profile.Name, ProfileId' +
@@ -107,7 +110,8 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_and_include_grandparent_query_field() {
+  static void it_should_return_results_and_include_grandparent_query_field()
+  {
     String expectedQueryString = 'SELECT Id, Name, Profile.UserLicense.LicenseDefinitionKey FROM User LIMIT 1';
     List<Schema.SObjectField> fieldChain = new List<Schema.SObjectField>{
       Schema.User.ProfileId,
@@ -125,7 +129,8 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_and_not_include_sobject_type_for_monomorphic_field() {
+  static void it_should_return_results_and_not_include_sobject_type_for_monomorphic_field()
+  {
     String expectedQueryString = 'SELECT Id, Name, Owner.Name, OwnerId FROM Account';
 
     Query accountQuery = new Query(Schema.Account.SObjectType).addField(new SOQL.QueryField(Schema.Account.OwnerId));
@@ -135,18 +140,22 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_and_include_separate_fields_for_for_polymorphic_field() {
+  static void it_should_return_results_and_include_separate_fields_for_for_polymorphic_field()
+  {
     List<String> supportedPolymorphicFieldNames = new List<String>();
-    for (Schema.SObjectField field : Schema.Name.SObjectType.getDescribe(Schema.SObjectDescribeOptions.DEFERRED).fields.getMap().values()) {
+    for (Schema.SObjectField field : Schema.Name.SObjectType.getDescribe(Schema.SObjectDescribeOptions.DEFERRED).fields.getMap().values())
+    {
       Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
 
-      if (!fieldDescribe.isAccessible()) {
+      if (!fieldDescribe.isAccessible())
+      {
         continue;
       }
       supportedPolymorphicFieldNames.add(String.valueOf(field));
 
       Set<String> referenceFieldNames = new Set<String>{ 'ProfileId', 'RecordTypeId', 'UserRoleId' };
-      if (referenceFieldNames.contains(fieldDescribe.getName())) {
+      if (referenceFieldNames.contains(fieldDescribe.getName()))
+      {
         supportedPolymorphicFieldNames.add(fieldDescribe.getRelationshipName() + '.Name');
       }
     }
@@ -180,7 +189,8 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_and_include_sobject_type_for_polymorphic_field() {
+  static void it_should_return_results_and_include_sobject_type_for_polymorphic_field()
+  {
     String expectedQueryString = 'SELECT Id, Name, Owner.Name, Owner.Type, OwnerId FROM Lead';
 
     Query leadQuery = new Query(Schema.Lead.SObjectType).addField(new SOQL.QueryField(Schema.Lead.OwnerId));
@@ -192,7 +202,8 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_and_include_related_records() {
+  static void it_should_return_results_and_include_related_records()
+  {
     String expectedQueryString = 'SELECT Id, Name, Type, (SELECT Email, Id, Name FROM Contacts) FROM Account';
 
     Query contactQuery = new Query(Schema.Contact.SObjectType).addField(Schema.Contact.Email);
@@ -206,7 +217,8 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_when_filtering_with_an_or_statement() {
+  static void it_should_return_results_when_filtering_with_an_or_statement()
+  {
     String expectedQueryString = 'SELECT Id, Name FROM Account WHERE ParentId != null AND (AnnualRevenue = null OR Type = null)';
 
     Query accountQuery = new Query(Schema.Account.SObjectType)
@@ -246,7 +258,8 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_should_run_with_system_mode() {
+  static void it_should_run_with_system_mode()
+  {
     String expectedQueryString = 'SELECT Id, Name FROM Account LIMIT 1';
 
     Query accountQuery = new Query(Schema.Account.SObjectType)
@@ -257,10 +270,14 @@ private class Query_Tests {
     List<Account> expectedResults = Database.query(expectedQueryString);
     List<Account> returnedResults;
     Exception caughtException;
-    System.runAs(minimumAccessUser()) {
-        try {
+    System.runAs(minimumAccessUser())
+    {
+        try
+        {
             returnedResults = accountQuery.getResults();
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             caughtException = e;
         }
     }
@@ -269,7 +286,8 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_should_run_with_user_mode() {
+  static void it_should_run_with_user_mode()
+  {
     String expectedQueryString = 'SELECT Id, Name FROM Account LIMIT 1';
 
     Query accountQuery = new Query(Schema.Account.SObjectType)
@@ -280,10 +298,14 @@ private class Query_Tests {
     List<Account> expectedResults = Database.query(expectedQueryString);
     List<Account> returnedResults;
     Exception caughtException;
-    System.runAs(minimumAccessUser()) {
-        try {
+    System.runAs(minimumAccessUser())
+    {
+        try
+        {
             returnedResults = accountQuery.getResults();
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             caughtException = e;
         }
     }
@@ -292,7 +314,8 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_includes_order_by_statement_for_single_field() {
+  static void it_includes_order_by_statement_for_single_field()
+  {
     String expectedQueryString = 'SELECT Id, Name FROM Lead ORDER BY CreatedDate ASC NULLS FIRST';
 
     Query leadQuery = new Query(Schema.Lead.SObjectType).orderByField(Schema.Lead.CreatedDate);
@@ -304,7 +327,8 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_marks_query_for_reference() {
+  static void it_marks_query_for_reference()
+  {
     String expectedQueryString = 'SELECT Id, Name FROM Lead FOR REFERENCE';
 
     Query leadQuery = new Query(Schema.Lead.SObjectType).forReference();
@@ -316,7 +340,8 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_marks_query_for_update() {
+  static void it_marks_query_for_update()
+  {
     String expectedQueryString = 'SELECT Id, Name FROM Lead FOR UPDATE';
 
     Query leadQuery = new Query(Schema.Lead.SObjectType).forUpdate();
@@ -328,7 +353,8 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_marks_query_for_view() {
+  static void it_marks_query_for_view()
+  {
     String expectedQueryString = 'SELECT Id, Name FROM Lead FOR VIEW';
 
     Query leadQuery = new Query(Schema.Lead.SObjectType).forView();
@@ -340,9 +366,11 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_when_filtering_with_iso_currency() {
+  static void it_should_return_results_when_filtering_with_iso_currency()
+  {
     // If multi-currency isn't enabled, then we cannot use IsoCurrency, so skip running this test
-    if (!System.UserInfo.isMultiCurrencyOrganization()) {
+    if (!System.UserInfo.isMultiCurrencyOrganization())
+    {
       return;
     }
 
@@ -354,13 +382,15 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_should_cache_query_results_when_enabled() {
+  static void it_should_cache_query_results_when_enabled()
+  {
     Integer loops = 4;
     Query userQuery = new Query(Schema.User.SObjectType).limitTo(1);
 
     // First, verify that caching is not enabled by default
     System.assertEquals(0, System.Limits.getQueries());
-    for (Integer i = 0; i < loops; i++) {
+    for (Integer i = 0; i < loops; i++)
+    {
       userQuery.getResults();
     }
     System.assertEquals(loops, System.Limits.getQueries());
@@ -368,7 +398,8 @@ private class Query_Tests {
     System.Test.startTest();
 
     userQuery.cacheResults();
-    for (Integer i = 0; i < loops; i++) {
+    for (Integer i = 0; i < loops; i++)
+    {
       userQuery.getResults();
     }
     System.assertEquals(1, System.Limits.getQueries());
@@ -428,8 +459,8 @@ private class Query_Tests {
       .limitTo(1);
 
     // TEST
-    accountQuery.setBind('minDateFilter', Date.today().addDays(-7));
-    accountQuery.setBind('maxDateFilter', Date.today());
+    accountQuery.setBind('minDateFilter', Date.today().addDays(-7))
+        .setBind('maxDateFilter', Date.today());
     List<Account> returnedResults = accountQuery.getResults();
 
     // VERIFY
@@ -454,10 +485,12 @@ private class Query_Tests {
     // TEST
     accountQuery.removeBind('dateFilter');
     Exception caughtException;
-    try {
+    try
+    {
       List<Account> returnedResults = accountQuery.getResults();
     }
-    catch (Exception e) {
+    catch (Exception e)
+    {
       caughtException = e;
     }
 
@@ -480,10 +513,12 @@ private class Query_Tests {
     // TEST
     accountQuery.clearBinds();
     Exception caughtException;
-    try {
+    try
+    {
       List<Account> returnedResults = accountQuery.getResults();
     }
-    catch (Exception e) {
+    catch (Exception e)
+    {
       caughtException = e;
     }
 
@@ -493,7 +528,8 @@ private class Query_Tests {
     System.Assert.areEqual('Key \'maxDateFilter\' does not exist in the bindMap', caughtException.getMessage());
   }
 
-  static User minimumAccessUser() {
+  static User minimumAccessUser()
+  {
     return new User(
       Alias = 'newUser',
       Email = 'newuser@testorg.com',

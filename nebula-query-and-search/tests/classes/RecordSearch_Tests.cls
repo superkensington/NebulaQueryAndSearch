@@ -9,7 +9,8 @@
 @IsTest(IsParallel=true)
 private class RecordSearch_Tests {
   @IsTest
-  static void it_should_return_first_result_for_a_single_sobject_type() {
+  static void it_should_return_first_result_for_a_single_sobject_type()
+  {
     String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name)';
 
     Query userQuery = new Query(Schema.User.SObjectType);
@@ -20,7 +21,8 @@ private class RecordSearch_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_for_a_single_sobject_type() {
+  static void it_should_return_results_for_a_single_sobject_type()
+  {
     String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name)';
 
     Query userQuery = new Query(Schema.User.SObjectType);
@@ -31,7 +33,8 @@ private class RecordSearch_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_for_multiple_sobject_types() {
+  static void it_should_return_results_for_multiple_sobject_types()
+  {
     String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING Account(Id, Name), User(Id, Name)';
 
     List<Query> queries = new List<Query>{ new Query(Schema.User.SObjectType), new Query(Schema.Account.SObjectType) };
@@ -42,7 +45,8 @@ private class RecordSearch_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_with_highlight_enabled() {
+  static void it_should_return_results_with_highlight_enabled()
+  {
     String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name) WITH HIGHLIGHT';
 
     RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.SObjectType));
@@ -53,7 +57,8 @@ private class RecordSearch_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_with_snippet_enabled() {
+  static void it_should_return_results_with_snippet_enabled()
+  {
     Integer snippetTargetLength = 10;
     String expectedSearchQueryString =
       'FIND \'' +
@@ -71,7 +76,8 @@ private class RecordSearch_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_in_email_search_group() {
+  static void it_should_return_results_in_email_search_group()
+  {
     Integer snippetTargetLength = 10;
     String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN EMAIL FIELDS RETURNING User(Id, Name)';
 
@@ -83,7 +89,8 @@ private class RecordSearch_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_with_spell_correction_enabled() {
+  static void it_should_return_results_with_spell_correction_enabled()
+  {
     String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name)' + ' WITH SPELL_CORRECTION = true';
 
     RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.SObjectType));
@@ -94,9 +101,11 @@ private class RecordSearch_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_with_update_article_reporting_for_tracking_enabled() {
+  static void it_should_return_results_with_update_article_reporting_for_tracking_enabled()
+  {
     // If Knowledge isn't enabled, then we cannot use Knowledge-specific SOSL methods, so skip running this test
-    if (!Schema.getGlobalDescribe().containsKey('KnowledgeArticle')) {
+    if (!Schema.getGlobalDescribe().containsKey('KnowledgeArticle'))
+    {
       return;
     }
 
@@ -111,9 +120,11 @@ private class RecordSearch_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_with_update_article_reporting_for_viewstat_enabled() {
+  static void it_should_return_results_with_update_article_reporting_for_viewstat_enabled()
+  {
     // If Knowledge isn't enabled, then we cannot use Knowledge-specific SOSL methods, so skip running this test
-    if (!Schema.getGlobalDescribe().containsKey('KnowledgeArticle')) {
+    if (!Schema.getGlobalDescribe().containsKey('KnowledgeArticle'))
+    {
       return;
     }
 
@@ -128,7 +139,8 @@ private class RecordSearch_Tests {
   }
 
   @IsTest
-  static void it_should_run_with_system_mode() {
+  static void it_should_run_with_system_mode()
+  {
     String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING Contact(Id, Name)';
 
     Query contactQuery = new Query(Schema.Contact.SObjectType);
@@ -141,10 +153,14 @@ private class RecordSearch_Tests {
     List<List<SObject>> expectedResults = Search.query(expectedSearchQueryString);
     List<List<SObject>> returnedResults;
     Exception caughtException;
-    System.runAs(minimumAccessUser()) {
-        try {
+    System.runAs(minimumAccessUser())
+    {
+        try
+        {
             returnedResults = contactSearch.getResults();
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             caughtException = e;
         }
     }
@@ -153,7 +169,8 @@ private class RecordSearch_Tests {
   }
 
   @IsTest
-  static void it_should_run_with_user_mode() {
+  static void it_should_run_with_user_mode()
+  {
     String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING Contact(Id, Name)';
 
     Query contactQuery = new Query(Schema.Contact.SObjectType);
@@ -166,10 +183,14 @@ private class RecordSearch_Tests {
     List<List<SObject>> expectedResults = Search.query(expectedSearchQueryString);
     List<List<SObject>> returnedResults;
     Exception caughtException;
-    System.runAs(minimumAccessUser()) {
-        try {
+    System.runAs(minimumAccessUser())
+    {
+        try
+        {
             returnedResults = contactSearch.getResults();
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             caughtException = e;
         }
     }
@@ -178,14 +199,16 @@ private class RecordSearch_Tests {
   }
 
   @IsTest
-  static void it_should_cache_search_results_when_enabled() {
+  static void it_should_cache_search_results_when_enabled()
+  {
     Integer loops = 4;
     Query userQuery = new Query(Schema.User.SObjectType);
     RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), userQuery);
 
     // First, verify that caching is not enabled by default
     System.assertEquals(0, System.Limits.getSoslQueries());
-    for (Integer i = 0; i < loops; i++) {
+    for (Integer i = 0; i < loops; i++)
+    {
       userSearch.getResults();
     }
     System.assertEquals(loops, System.Limits.getSoslQueries());
@@ -193,7 +216,8 @@ private class RecordSearch_Tests {
     System.Test.startTest();
 
     userSearch.cacheResults();
-    for (Integer i = 0; i < loops; i++) {
+    for (Integer i = 0; i < loops; i++)
+    {
       userSearch.getResults();
     }
     System.assertEquals(1, System.Limits.getSoslQueries());
@@ -201,7 +225,8 @@ private class RecordSearch_Tests {
     System.Test.stopTest();
   }
 
-  static User minimumAccessUser() {
+  static User minimumAccessUser()
+  {
     return new User(
       Alias = 'newUser',
       Email = 'newuser@testorg.com',

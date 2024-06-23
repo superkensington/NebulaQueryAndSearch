@@ -130,7 +130,8 @@ global abstract class SOQL implements Comparable {
 
   private static Map<Integer, List<SObject>> cachedResultsByHashCode = new Map<Integer, List<SObject>>();
 
-  public static String getOperatorValue(SOQL.Operator operator) {
+  public static String getOperatorValue(SOQL.Operator operator)
+  {
     switch on operator {
       when EQUALS {
         return '=';
@@ -175,8 +176,8 @@ global abstract class SOQL implements Comparable {
   }
 
   protected String query;
-  protected Schema.SObjectType sobjectType;
-  protected Schema.DescribeSObjectResult sobjectDescribe;
+  protected Schema.SObjectType sObjectType;
+  protected Schema.DescribeSObjectResult sObjectDescribe;
   protected Map<SOQL.QueryField, SOQL.FieldCategory> includedQueryFieldsAndCategory;
   protected Set<SOQL.QueryField> excludedQueryFields;
   protected Scope scope;
@@ -190,7 +191,8 @@ global abstract class SOQL implements Comparable {
   protected Map<String, Object> bindsMap;
   protected Boolean cacheResults;
 
-  protected SOQL(Schema.SObjectType sobjectType, Boolean sortQueryFields) {
+  protected SOQL(Schema.SObjectType sobjectType, Boolean sortQueryFields)
+  {
     this.sobjectType = sobjectType;
     this.sortQueryFields = sortQueryFields;
 
@@ -205,132 +207,164 @@ global abstract class SOQL implements Comparable {
     this.hasChanged = false;
   }
 
-  global Schema.SObjectType getSObjectType() {
-    return this.sobjectType;
+  global Schema.SObjectType getSObjectType()
+  {
+    return this.sObjectType;
   }
 
-  // TODO decide if this should be global
   global abstract String getQuery();
 
-  public Integer compareTo(Object compareTo) {
+  public Integer compareTo(Object compareTo)
+  {
     String currentSObjectApiName = String.valueOf(this.getSObjectType());
     SOQL soqlToCompareTo = (SOQL) compareTo;
     String compareToSObjectApiName = String.valueOf(soqlToCompareTo.getSObjectType());
 
-    if (currentSObjectApiName == compareToSObjectApiName) {
+    if (currentSObjectApiName == compareToSObjectApiName)
+    {
       return 0;
-    } else if (currentSObjectApiName > compareToSObjectApiName) {
+    }
+    else if (currentSObjectApiName > compareToSObjectApiName)
+    {
       return 1;
-    } else {
+    }
+    else
+    {
       return -1;
     }
   }
 
-  protected void doCacheResults() {
+  protected void doCacheResults()
+  {
     this.cacheResults = true;
   }
 
-  protected void doAddFields(List<SOQL.QueryField> queryFields, SOQL.FieldCategory fieldCategory) {
-    if (fieldCategory == null) {
-      fieldCategory = DEFAULT_FIELD_CATEGORY;
+  protected void doAddFields(List<SOQL.QueryField> queryFields, SOQL.FieldCategory fieldCategory)
+  {
+    for (SOQL.QueryField queryField : queryFields)
+    {
+      this.includedQueryFieldsAndCategory.put(queryField, fieldCategory ?? DEFAULT_FIELD_CATEGORY);
     }
-    for (SOQL.QueryField queryField : queryFields) {
-      this.includedQueryFieldsAndCategory.put(queryField, fieldCategory);
-    }
-    this.doSetHasChanged();
+    this.setHasChanged();
   }
 
-  protected void doRemoveFields(List<SOQL.QueryField> queryFields) {
+  protected void doRemoveFields(List<SOQL.QueryField> queryFields)
+  {
     this.excludedQueryFields.addAll(queryFields);
+    this.setHasChanged();
   }
 
-  protected void doUsingScope(Scope scope) {
+  protected void doUsingScope(Scope scope)
+  {
     this.scope = scope;
+    this.setHasChanged();
   }
 
-  protected void doFilterWhere(List<SOQL.QueryFilter> filters) {
-    if (filters?.isEmpty() != false) {
+  protected void doFilterWhere(List<SOQL.QueryFilter> filters)
+  {
+    if (filters?.isEmpty() != false)
+    {
       return;
     }
 
-    for (SOQL.QueryFilter filter : filters) {
+    for (SOQL.QueryFilter filter : filters)
+    {
       this.whereFilters.add(filter.toString());
-      if (String.isNotBlank(filter.bindKey)) {
+      if (String.isNotBlank(filter.bindKey))
+      {
         this.bindsMap.put(filter.bindKey, filter.value);
       }
     }
-    this.doSetHasChanged();
+    this.setHasChanged();
   }
 
-  protected void doOrFilterWhere(List<SOQL.QueryFilter> filters) {
-    if (filters == null || filters.isEmpty()) {
+  protected void doOrFilterWhere(List<SOQL.QueryFilter> filters)
+  {
+    if (filters?.isEmpty() != false)
+    {
       return;
     }
 
     filters.sort();
 
     List<String> orFilterPieces = new List<String>();
-    for (SOQL.QueryFilter filter : filters) {
+    for (SOQL.QueryFilter filter : filters)
+    {
       orFilterPieces.add(filter.toString());
     }
     this.whereFilters.add('(' + String.join(orFilterPieces, ' OR ') + ')');
-    this.doSetHasChanged();
+    this.setHasChanged();
   }
 
-  protected void doWithAccessLevel(System.AccessLevel accessLevel) {
+  protected void doWithAccessLevel(System.AccessLevel accessLevel)
+  {
     this.accessLevel = accessLevel;
+    this.setHasChanged();
   }
 
-  protected void doOrderBy(SOQL.QueryField queryField, SOQL.SortOrder sortOrder, Boolean sortNullsFirst) {
-    this.doOrderBy(queryField.toString(), sortOrder, sortNullsFirst);
+  protected void doOrderByField(SOQL.QueryField queryField, SOQL.SortOrder sortOrder, Boolean sortNullsFirst)
+  {
+    this.doOrderByField(queryField.toString(), sortOrder, sortNullsFirst);
   }
 
-  protected void doOrderBy(String fieldPath, SOQL.SortOrder sortOrder, Boolean sortNullsFirst) {
-    if (sortOrder == null) {
-      sortOrder = DEFAULT_SORT_ORDER;
-    }
-    if (sortNullsFirst == null) {
-      sortNullsFirst = DEFAULT_NULLS_SORT_ORDER_FIRST;
-    }
-
-    String sortOrderString = sortOrder == SOQL.SortOrder.ASCENDING ? 'ASC' : 'DESC';
-    String nullsSortOrder = sortNullsFirst ? 'FIRST' : 'LAST';
+  protected void doOrderByField(String fieldPath, SOQL.SortOrder sortOrder, Boolean sortNullsFirst)
+  {
+    String sortOrderString = (sortOrder ?? DEFAULT_SORT_ORDER) == SOQL.SortOrder.ASCENDING ? 'ASC' : 'DESC';
+    String nullsSortOrder = (sortNullsFirst ?? DEFAULT_NULLS_SORT_ORDER_FIRST) ? 'FIRST' : 'LAST';
     this.orderByFieldApiNames.add(fieldPath + ' ' + sortOrderString + ' NULLS ' + nullsSortOrder);
+    this.setHasChanged();
   }
 
-  protected void doLimitTo(Integer numberOfRecords) {
+  protected void doLimitTo(Integer numberOfRecords)
+  {
     this.limitCount = numberOfRecords;
+    this.setHasChanged();
   }
 
-  protected void doOffsetBy(Integer offset) {
+  protected void doOffsetBy(Integer offset)
+  {
     this.offset = offset;
+    this.setHasChanged();
   }
 
-  protected void doSetBind(String key, Object value) {
+  protected void doSetBind(String key, Object value)
+  {
     this.bindsMap.put(key, value);
+    this.setHasChanged();
   }
 
-  protected void doSetBinds(Map<String, Object> binds) {
+  protected void doSetBinds(Map<String, Object> binds)
+  {
     this.bindsMap.putAll(binds);
+    this.setHasChanged();
   }
 
-  protected void doRemoveBind(String key) {
+  protected void doRemoveBind(String key)
+  {
     this.bindsMap.remove(key);
+    this.setHasChanged();
   }
 
-  protected void doClearBinds() {
+  protected void doClearBinds()
+  {
     this.bindsMap.clear();
+    this.setHasChanged();
   }
 
-  protected SObject doGetFirstResult() {
+  protected SObject doGetFirstResult()
+  {
     List<SObject> results = this.doGetResults();
     return results == null || results.isEmpty() ? null : results[0];
   }
 
-  protected List<SObject> doGetResults() {
-    if (this.cacheResults) {
+  protected List<SObject> doGetResults()
+  {
+    if (this.cacheResults)
+    {
       return this.getCachedResults();
-    } else {
+    }
+    else
+    {
       return Database.queryWithBinds(
         this.getQuery(),
         this.doGetBindsMap(),
@@ -339,19 +373,17 @@ global abstract class SOQL implements Comparable {
     }
   }
 
-  protected List<String> doGetFieldsToQuery(SOQL.QueryField queryField, SOQL.FieldCategory fieldCat) {
+  protected List<String> doGetFieldsToQuery(SOQL.QueryField queryField, SOQL.FieldCategory fieldCat)
+  {
     List<String> fieldsToReturn = new List<String>();
 
-    if (fieldCat == null) {
-      return fieldsToReturn;
-    } else if (fieldCat == SOQL.FieldCategory.ACCESSIBLE && !queryField.getDescribe().isAccessible()) {
-      return fieldsToReturn;
-    } else if (fieldCat == SOQL.FieldCategory.UPDATEABLE && !queryField.getDescribe().isUpdateable()) {
-      return fieldsToReturn;
-    } else if (fieldCat == SOQL.FieldCategory.STANDARD && queryField.getDescribe().isCustom()) {
-      return fieldsToReturn;
-    } else if (fieldCat == SOQL.FieldCategory.CUSTOM && !queryField.getDescribe().isCustom()) {
-      return fieldsToReturn;
+    if (fieldCat == null ||
+        fieldCat == SOQL.FieldCategory.ACCESSIBLE && !queryField.getDescribe().isAccessible() ||
+        fieldCat == SOQL.FieldCategory.UPDATEABLE && !queryField.getDescribe().isUpdateable() ||
+        fieldCat == SOQL.FieldCategory.STANDARD && queryField.getDescribe().isCustom() ||
+        fieldCat == SOQL.FieldCategory.CUSTOM && !queryField.getDescribe().isCustom())
+    {
+        return fieldsToReturn;
     }
 
     fieldsToReturn.add(queryField.toString());
@@ -359,68 +391,84 @@ global abstract class SOQL implements Comparable {
     return fieldsToReturn;
   }
 
-  protected String doGetQueryFieldString() {
+  protected String doGetQueryFieldString()
+  {
     Set<String> distinctFieldApiNamesToQuery = new Set<String>();
-    for (SOQL.QueryField queryField : this.includedQueryFieldsAndCategory.keySet()) {
+    for (SOQL.QueryField queryField : this.includedQueryFieldsAndCategory.keySet())
+    {
       SOQL.FieldCategory fieldCategory = this.includedQueryFieldsAndCategory.get(queryField);
 
       List<String> fieldsToQuery = this.doGetFieldsToQuery(queryField, fieldCategory);
-      if (!fieldsToQuery.isEmpty()) {
+      if (!fieldsToQuery.isEmpty())
+      {
         distinctFieldApiNamesToQuery.addAll(fieldsToQuery);
       }
     }
 
     // Remove an excluded field paths
-    for (SOQL.QueryField excludedQueryField : this.excludedQueryFields) {
+    for (SOQL.QueryField excludedQueryField : this.excludedQueryFields)
+    {
       distinctFieldApiNamesToQuery.remove(excludedQueryField.toString());
     }
 
     List<String> fieldApiNamesToQuery = new List<String>(distinctFieldApiNamesToQuery);
-    if (this.sortQueryFields) {
+    if (this.sortQueryFields)
+    {
       fieldApiNamesToQuery.sort();
     }
     return String.join(fieldApiNamesToQuery, ', ');
   }
 
-  protected String doGetUsingScopeString() {
+  protected String doGetUsingScopeString()
+  {
     return this.scope == null ? '' : ' USING SCOPE ' + this.scope.name();
   }
 
-  protected String doGetWhereClauseString() {
+  protected String doGetWhereClauseString()
+  {
     this.whereFilters.sort();
     return this.whereFilters.isEmpty() ? '' : ' WHERE ' + String.join(this.whereFilters, ' AND ');
   }
 
-  protected System.AccessLevel doGetAccessLevel() {
+  protected System.AccessLevel doGetAccessLevel()
+  {
     return this.accessLevel ?? System.AccessLevel.SYSTEM_MODE;
   }
 
-  protected String doGetOrderByString() {
+  protected String doGetOrderByString()
+  {
     return this.orderByFieldApiNames.isEmpty() ? '' : ' ORDER BY ' + String.join(this.orderByFieldApiNames, ', ');
   }
 
-  protected String doGetLimitCountString() {
+  protected String doGetLimitCountString()
+  {
     return this.limitCount == null ? '' : ' LIMIT ' + this.limitCount;
   }
 
-  protected String doGetOffetString() {
+  protected String doGetOffetString()
+  {
     return this.offset == null ? '' : ' OFFSET ' + this.offset;
   }
 
-  protected Map<String, Object> doGetBindsMap() {
+  protected Map<String, Object> doGetBindsMap()
+  {
     return this.bindsMap ?? new Map<String, Object>();
   }
 
-  private void doSetHasChanged() {
+  protected SOQL setHasChanged()
+  {
     this.hasChanged = true;
+    return this;
   }
 
-  private List<SObject> getCachedResults() {
+  private List<SObject> getCachedResults()
+  {
     String query = this.getQuery();
     Integer hashCode = query.hashCode();
 
     Boolean isCached = cachedResultsByHashCode.containsKey(hashCode);
-    if (!isCached) {
+    if (!isCached)
+    {
       cachedResultsByHashCode.put(
         hashCode,
         Database.queryWithBinds(
@@ -438,15 +486,18 @@ global abstract class SOQL implements Comparable {
   public class DateLiteral {
     private String dateLiteral;
 
-    public DateLiteral(SOQL.FixedDateLiteral fixedDateLiteral) {
+    public DateLiteral(SOQL.FixedDateLiteral fixedDateLiteral)
+    {
       this.dateLiteral = fixedDateLiteral.name();
     }
 
-    public DateLiteral(SOQL.RelativeDateLiteral relativeDateLiteral, Integer n) {
+    public DateLiteral(SOQL.RelativeDateLiteral relativeDateLiteral, Integer n)
+    {
       this.dateLiteral = relativeDateLiteral.name() + ':' + n;
     }
 
-    public override String toString() {
+    public override String toString()
+    {
       return this.dateLiteral;
     }
   }
@@ -454,14 +505,17 @@ global abstract class SOQL implements Comparable {
   public class IsoCurrency {
     private final String isoCurrency;
 
-    public IsoCurrency(String isoCode, Decimal currencyAmount) {
-      if (!System.UserInfo.isMultiCurrencyOrganization()) {
+    public IsoCurrency(String isoCode, Decimal currencyAmount)
+    {
+      if (!System.UserInfo.isMultiCurrencyOrganization())
+      {
         throw new SOQLException('IsoCurrency is only supported in multi-currency orgs');
       }
       this.isoCurrency = isoCode + currencyAmount;
     }
 
-    public override String toString() {
+    public override String toString()
+    {
       return this.isoCurrency;
     }
   }
@@ -470,85 +524,105 @@ global abstract class SOQL implements Comparable {
     private final String queryFieldPath;
     private final Schema.DescribeFieldResult fieldDescribe;
 
-    global QueryField(Schema.SObjectType sobjectType, String queryFieldPath) {
+    global QueryField(Schema.SObjectType sobjectType, String queryFieldPath)
+    {
       this.fieldDescribe = this.getLastFieldDescribe(sobjectType, queryFieldPath);
       this.queryFieldPath = queryFieldPath;
     }
 
-    global QueryField(Schema.SObjectField field) {
+    global QueryField(Schema.SObjectField field)
+    {
       this(new List<Schema.SObjectField>{ field });
     }
 
-    global QueryField(List<Schema.SObjectField> fieldChain) {
+    global QueryField(List<Schema.SObjectField> fieldChain)
+    {
       this.fieldDescribe = this.getLastFieldDescribe(fieldChain);
       this.queryFieldPath = this.getQueryField(fieldChain);
     }
 
-    global QueryField(SOQL.DateFunction dateFunction, Schema.SObjectField field) {
+    global QueryField(SOQL.DateFunction dateFunction, Schema.SObjectField field)
+    {
       this(dateFunction, field, false);
     }
 
-    global QueryField(SOQL.DateFunction dateFunction, Schema.SObjectField field, Boolean convertTimeZone) {
+    global QueryField(SOQL.DateFunction dateFunction, Schema.SObjectField field, Boolean convertTimeZone)
+    {
       this(dateFunction, new List<Schema.SObjectField>{ field }, convertTimeZone);
     }
 
-    global QueryField(SOQL.DateFunction dateFunction, List<Schema.SObjectField> fieldChain) {
+    global QueryField(SOQL.DateFunction dateFunction, List<Schema.SObjectField> fieldChain)
+    {
       this(dateFunction, fieldChain, false);
     }
 
-    global QueryField(SOQL.DateFunction dateFunction, List<Schema.SObjectField> fieldChain, Boolean convertTimeZone) {
+    global QueryField(SOQL.DateFunction dateFunction, List<Schema.SObjectField> fieldChain, Boolean convertTimeZone)
+    {
       this.fieldDescribe = this.getLastFieldDescribe(fieldChain);
       this.queryFieldPath = this.getDateFunctionFieldPath(dateFunction, fieldChain, convertTimeZone);
     }
     //https://help.salesforce.com/articleView?id=custom_field_geolocate_overview.htm&type=5
-    global QueryField(List<Schema.SObjectField> fieldChain, Decimal latitude, Decimal longitude) {
+    global QueryField(List<Schema.SObjectField> fieldChain, Decimal latitude, Decimal longitude)
+    {
       this.fieldDescribe = this.getLastFieldDescribe(fieldChain);
       //this.queryFieldPath = 'DISTANCE(' + this.getQueryField(fieldChain), GEOLOCATION(10,10), :units)
     }
 
     // TODO decide if this should be global
-    public override String toString() {
+    public override String toString()
+    {
       return this.queryFieldPath;
     }
 
     // TODO decide if this should be global
-    public Schema.DescribeFieldResult getDescribe() {
+    public Schema.DescribeFieldResult getDescribe()
+    {
       return this.fieldDescribe;
     }
 
     // TODO decide if this should be global
-    public String getFieldPath() {
+    public String getFieldPath()
+    {
       return this.queryFieldPath;
     }
 
-    private String getDateFunctionFieldPath(SOQL.DateFunction dateFunction, List<Schema.SObjectField> fieldChain, Boolean convertTimeZone) {
+    private String getDateFunctionFieldPath(SOQL.DateFunction dateFunction, List<Schema.SObjectField> fieldChain, Boolean convertTimeZone)
+    {
       String fieldPath = !convertTimeZone ? this.getQueryField(fieldChain) : 'convertTimeZone(' + this.getQueryField(fieldChain) + ')';
 
       return dateFunction.name() + '(' + fieldPath + ')';
     }
 
-    private Schema.DescribeFieldResult getLastFieldDescribe(Schema.SObjectType sobjectType, String queryField) {
+    private Schema.DescribeFieldResult getLastFieldDescribe(Schema.SObjectType sobjectType, String queryField)
+    {
       Schema.SObjectType currentSObjectType = sobjectType;
 
       List<Schema.SObjectField> fields = new List<Schema.SObjectField>();
       List<String> queryFieldPieces = queryField.split('\\.');
       Integer lastFieldIndex = queryFieldPieces.size() <= 1 ? 0 : queryFieldPieces.size() - 1;
 
-      for (Integer i = 0; i < queryFieldPieces.size(); i++) {
+      for (Integer i = 0; i < queryFieldPieces.size(); i++)
+      {
         String queryFieldPiece = queryFieldPieces[i];
 
         String fieldApiName;
-        if (i == lastFieldIndex) {
+        if (i == lastFieldIndex)
+        {
           fieldApiName = queryFieldPiece;
-        } else if (queryFieldPiece.endsWith('__r')) {
+        }
+        else if (queryFieldPiece.endsWith('__r'))
+        {
           fieldApiName = queryFieldPiece.replace('__r', '__c');
-        } else {
+        }
+        else
+        {
           fieldApiName = queryFieldPiece + 'Id';
         }
 
         Schema.SObjectField field = currentSObjectType.getDescribe(Schema.SObjectDescribeOptions.DEFERRED).fields.getMap().get(fieldApiName);
 
-        if (i < lastFieldIndex) {
+        if (i < lastFieldIndex)
+        {
           // TODO add support for polymorphic fields
           currentSObjectType = field.getDescribe().getReferenceTo()[0];
         }
@@ -558,22 +632,30 @@ global abstract class SOQL implements Comparable {
       return this.getLastFieldDescribe(fields);
     }
 
-    private Schema.DescribeFieldResult getLastFieldDescribe(List<Schema.SObjectField> fields) {
+    private Schema.DescribeFieldResult getLastFieldDescribe(List<Schema.SObjectField> fields)
+    {
       Integer lastFieldIndex = fields.size() - 1;
       return fields[lastFieldIndex].getDescribe();
     }
 
-    private String getQueryField(List<Schema.SObjectField> fields) {
+    private String getQueryField(List<Schema.SObjectField> fields)
+    {
       Integer lastFieldIndex = fields.size() - 1;
       List<String> queryFieldPieces = new List<String>();
-      for (Integer i = 0; i < fields.size(); i++) {
+      for (Integer i = 0; i < fields.size(); i++)
+      {
         Schema.SObjectField field = fields[i];
         // If any field in the chain is not accessible, then the user cant access the data, so return an empty list
-        if (!field.getDescribe().isAccessible()) {
+        if (!field.getDescribe().isAccessible())
+        {
           return null;
-        } else if (i == lastFieldIndex) {
+        }
+        else if (i == lastFieldIndex)
+        {
           queryFieldPieces.add(field.getDescribe().getName());
-        } else {
+        }
+        else
+        {
           queryFieldPieces.add(field.getDescribe().getRelationshipName());
         }
       }
@@ -589,19 +671,23 @@ global abstract class SOQL implements Comparable {
     private String filterString;
     private String bindKey;
 
-    global QueryFilter(Schema.SObjectField field, SOQL.Operator operator, Object value) {
+    global QueryFilter(Schema.SObjectField field, SOQL.Operator operator, Object value)
+    {
       this(new QueryField(field), operator, value);
     }
 
-    global QueryFilter(Schema.SObjectField field, SOQL.Operator operator, Object value, String bindKey) {
+    global QueryFilter(Schema.SObjectField field, SOQL.Operator operator, Object value, String bindKey)
+    {
       this(new QueryField(field), operator, value, bindKey);
     }
 
-    global QueryFilter(QueryField queryField, SOQL.Operator operator, Object value) {
+    global QueryFilter(QueryField queryField, SOQL.Operator operator, Object value)
+    {
       this(queryField, operator, value, null);
     }
 
-    global QueryFilter(QueryField queryField, SOQL.Operator operator, Object value, String bindKey) {
+    global QueryFilter(QueryField queryField, SOQL.Operator operator, Object value, String bindKey)
+    {
       this.queryField = queryField;
       this.operator = operator;
       this.value = value;
@@ -611,47 +697,60 @@ global abstract class SOQL implements Comparable {
       this.filterString = queryField + ' ' + SOQL.getOperatorValue(operator) + ' ' + formattedValue;
     }
 
-    global QueryFilter(Schema.SObjectType childSObjectType, Boolean inOrNotIn, Schema.SObjectField lookupFieldOnChildSObject) {
+    global QueryFilter(Schema.SObjectType childSObjectType, Boolean inOrNotIn, Schema.SObjectField lookupFieldOnChildSObject)
+    {
       this.operator = inOrNotIn ? SOQL.Operator.IS_IN : SOQL.Operator.IS_NOT_IN;
       this.filterString = 'Id ' + SOQL.getOperatorValue(this.operator) + ' (SELECT ' + lookupFieldOnChildSObject + ' FROM ' + childSObjectType + ')';
     }
 
-    global QueryFilter(Query childQuery, Boolean inOrNotIn, Schema.SObjectField lookupFieldOnChildSObject) {
+    global QueryFilter(Query childQuery, Boolean inOrNotIn, Schema.SObjectField lookupFieldOnChildSObject)
+    {
       this.operator = inOrNotIn ? SOQL.Operator.IS_IN : SOQL.Operator.IS_NOT_IN;
       this.filterString = 'Id ' + SOQL.getOperatorValue(this.operator) + ' ' + childQuery.getSubquery(lookupFieldOnChildSObject);
     }
 
-    global Integer compareTo(Object compareTo) {
+    global Integer compareTo(Object compareTo)
+    {
       QueryFilter compareToQueryFilter = (QueryFilter) compareTo;
 
-      if (this.toString() == compareToQueryFilter.toString()) {
+      if (this.toString() == compareToQueryFilter.toString())
+      {
         return 0;
-      } else if (this.toString() > compareToQueryFilter.toString()) {
+      }
+      else if (this.toString() > compareToQueryFilter.toString())
+      {
         return 1;
-      } else {
+      }
+      else
+      {
         return -1;
       }
     }
 
-    global SOQL.QueryField getQueryField() {
+    global SOQL.QueryField getQueryField()
+    {
       return this.queryField;
     }
 
-    global SOQL.Operator getOperator() {
+    global SOQL.Operator getOperator()
+    {
       return this.operator;
     }
 
-    global Object getValue() {
+    global Object getValue()
+    {
       return this.value;
     }
 
     // TODO decide if this should be global
-    public Object getFormattedValue() {
+    public Object getFormattedValue()
+    {
       return this.formattedValue;
     }
 
     // TODO decide if this should be global
-    public override String toString() {
+    public override String toString()
+    {
       return this.filterString;
     }
   }
@@ -663,60 +762,84 @@ global abstract class SOQL implements Comparable {
   public class QueryArgument {
     private String value;
 
-    public QueryArgument(Object valueToFormat) {
+    public QueryArgument(Object valueToFormat)
+    {
       this.value = this.formatObjectForQueryString(valueToFormat);
     }
 
-    public override String toString() {
+    public override String toString()
+    {
       return this.value;
     }
 
-    private String formatObjectForQueryString(Object valueToFormat) {
-      if (valueToFormat == null) {
+    private String formatObjectForQueryString(Object valueToFormat)
+    {
+      if (valueToFormat == null)
+      {
         return null;
-      } else if (valueToFormat instanceof Iterable<Object>) {
+      }
+      else if (valueToFormat instanceof Iterable<Object>)
+      {
         return this.convertIterableToQueryString((Iterable<Object>) valueToFormat);
-      } else if (valueToFormat instanceof Map<Object, Object>) {
+      }
+      else if (valueToFormat instanceof Map<Object, Object>)
+      {
         return this.convertMapToQueryString(valueToFormat);
-      } else if (valueToFormat instanceof Date) {
+      }
+      else if (valueToFormat instanceof Date)
+      {
         return String.valueOf((Date) valueToFormat).left(10);
-      } else if (valueToFormat instanceof Datetime) {
+      }
+      else if (valueToFormat instanceof Datetime)
+      {
         Datetime datetimeValue = (Datetime) valueToFormat;
         return datetimeValue.format('yyyy-MM-dd\'T\'HH:mm:ss\'Z\'', 'Greenwich Mean Time');
-      } else if (valueToFormat instanceof SObject) {
+      }
+      else if (valueToFormat instanceof SObject)
+      {
         return this.wrapInSingleQuotes(((SObject) valueToFormat).Id);
-      } else if (valueToFormat instanceof String) {
+      }
+      else if (valueToFormat instanceof String)
+      {
         // Escape single quotes to prevent SOQL/SOSL injection
         String unformattedString = (String) valueToFormat;
         String stringArgument = String.escapeSingleQuotes(unformattedString.trim());
         return this.wrapInSingleQuotes(stringArgument);
-      } else {
+      }
+      else
+      {
         return String.valueOf(valueToFormat);
       }
     }
 
-    private String wrapInSingleQuotes(String input) {
+    private String wrapInSingleQuotes(String input)
+    {
       input = input.trim();
-      if (input.left(1) != '\'') {
+      if (input.left(1) != '\'')
+      {
         input = '\'' + input;
       }
-      if (input.right(1) != '\'') {
+      if (input.right(1) != '\'')
+      {
         input = input + '\'';
       }
       return input;
     }
 
-    private String convertIterableToQueryString(Iterable<Object> valueIterable) {
+    private String convertIterableToQueryString(Iterable<Object> valueIterable)
+    {
       List<String> parsedValueList = new List<String>();
       Iterator<Object> valueIterator = valueIterable.iterator();
-      while (valueIterator.hasNext()) {
+      while (valueIterator.hasNext())
+      {
         Object value = valueIterator.next();
         parsedValueList.add(this.formatObjectForQueryString(value));
       }
       return '(' + String.join(parsedValueList, ', ') + ')';
     }
 
-    private String convertMapToQueryString(Object valueMap) {
+    private String convertMapToQueryString(Object valueMap)
+    {
       Map<String, Object> untypedMap = (Map<String, Object>) Json.deserializeUntyped(Json.serialize(valueMap));
       return this.convertIterableToQueryString(untypedMap.keySet());
     }

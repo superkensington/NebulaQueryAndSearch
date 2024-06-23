@@ -11,16 +11,20 @@
  */
 @SuppressWarnings('PMD.ApexDoc, PMD.AvoidGlobalModifier')
 global class RecordSearch extends SOSL {
-  global RecordSearch(String searchTerm, Query sobjectQuery) {
+  global RecordSearch(String searchTerm, Query sobjectQuery)
+  {
     super(searchTerm, sobjectQuery);
   }
 
-  global RecordSearch(String searchTerm, List<Query> sobjectQueries) {
+  global RecordSearch(String searchTerm, List<Query> sobjectQueries)
+  {
     super(searchTerm, sobjectQueries);
   }
 
-  global RecordSearch inSearchGroup(SOSL.SearchGroup searchGroup) {
-    if (searchGroup == null) {
+  global RecordSearch inSearchGroup(SOSL.SearchGroup searchGroup)
+  {
+    if (searchGroup == null)
+    {
       return this;
     }
 
@@ -32,7 +36,8 @@ global class RecordSearch extends SOSL {
     Schema.DataCategory dataCategory,
     SOSL.DataCategoryLocation dataCategoryLocation,
     Schema.DataCategory childDataCategory
-  ) {
+  )
+  {
     return this.withDataCategory(dataCategory, dataCategoryLocation, new List<Schema.DataCategory>{ childDataCategory });
   }
 
@@ -40,49 +45,59 @@ global class RecordSearch extends SOSL {
     Schema.DataCategory dataCategory,
     SOSL.DataCategoryLocation dataCategoryLocation,
     List<Schema.DataCategory> childDataCategories
-  ) {
+  )
+  {
     List<String> childDataCategoryApiNames = new List<String>();
-    for (Schema.DataCategory childDataCategory : childDataCategories) {
+    for (Schema.DataCategory childDataCategory : childDataCategories)
+    {
       childDataCategoryApiNames.add(childDataCategory.getName());
     }
     this.withDataCategoryClauses.add(dataCategory.getName() + ' ' + dataCategoryLocation + ' (' + String.join(childDataCategoryApiNames, ', ') + ')');
     return this.setHasChanged();
   }
 
-  global RecordSearch withHighlight() {
+  global RecordSearch withHighlight()
+  {
     this.withClauses.add('HIGHLIGHT');
     return this.setHasChanged();
   }
 
-  global RecordSearch withSnippet(Integer targetLength) {
+  global RecordSearch withSnippet(Integer targetLength)
+  {
     this.withClauses.add('SNIPPET (target_length=' + targetLength + ')');
     return this.setHasChanged();
   }
 
-  global RecordSearch withSpellCorrection() {
+  global RecordSearch withSpellCorrection()
+  {
     this.withClauses.add('SPELL_CORRECTION = true');
     return this.setHasChanged();
   }
 
-  global RecordSearch withAccessLevel(System.AccessLevel accessLevel) {
+  global RecordSearch withAccessLevel(System.AccessLevel accessLevel)
+  {
     this.accessLevel = accessLevel;
     return this.setHasChanged();
   }
 
-  global RecordSearch updateArticleReporting(SOSL.ArticleReporting articleReporting) {
+  global RecordSearch updateArticleReporting(SOSL.ArticleReporting articleReporting)
+  {
     this.articleReporting = articleReporting;
     return this.setHasChanged();
   }
 
-  global RecordSearch cacheResults() {
+  global RecordSearch cacheResults()
+  {
     this.cacheResults = true;
     return this.setHasChanged();
   }
 
   // TODO decide if this should be global
   @SuppressWarnings('PMD.AvoidDebugStatements')
-  public override String getSearch() {
-    if (this.searchQuery != null && !this.hasChanged) {
+  public override String getSearch()
+  {
+    if (this.searchQuery != null && !this.hasChanged)
+    {
       return this.searchQuery;
     }
 
@@ -103,19 +118,23 @@ global class RecordSearch extends SOSL {
     return this.searchQuery;
   }
 
-  global SObject getFirstResult() {
+  global SObject getFirstResult()
+  {
     return super.doGetFirstResult();
   }
 
-  global List<SObject> getFirstResults() {
+  global List<SObject> getFirstResults()
+  {
     return super.doGetFirstResults();
   }
 
-  global List<List<SObject>> getResults() {
+  global List<List<SObject>> getResults()
+  {
     return super.doGetResults();
   }
 
-  private RecordSearch setHasChanged() {
+  private RecordSearch setHasChanged()
+  {
     this.hasChanged = true;
     return this;
   }

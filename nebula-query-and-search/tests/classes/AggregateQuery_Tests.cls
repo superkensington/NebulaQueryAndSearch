@@ -38,7 +38,8 @@ private class AggregateQuery_Tests {
   }
 
   @IsTest
-  static void it_should_be_usable_after_construction() {
+  static void it_should_be_usable_after_construction()
+  {
     String expectedQueryString = 'SELECT COUNT(Id) COUNT__Id FROM Opportunity';
 
     AggregateQuery aggregateQuery = new AggregateQuery(Schema.Opportunity.SObjectType);
@@ -50,7 +51,8 @@ private class AggregateQuery_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_when_filtering() {
+  static void it_should_return_results_when_filtering()
+  {
     String expectedQueryString = 'SELECT Type FROM Opportunity WHERE AccountId != null GROUP BY Type';
 
     AggregateQuery aggregateQuery = new AggregateQuery(Schema.Opportunity.SObjectType)
@@ -79,7 +81,7 @@ private class AggregateQuery_Tests {
       .filterWhere(new SOQL.QueryFilter(Schema.Opportunity.AccountId, SOQL.Operator.NOT_EQUAL_TO, null, 'accountIdFilter'));
 
     // TEST
-    Integer returnedResult = aggregateQuery.getResultCount();
+    Integer returnedResult = aggregateQuery.getCountResults();
 
     // VERIFY
     System.Assert.areEqual(expectedQueryString, aggregateQuery.getCountQuery());
@@ -111,7 +113,8 @@ private class AggregateQuery_Tests {
   }
 
   @IsTest
-  static void it_should_return_results_when_filtering_with_an_or_statement() {
+  static void it_should_return_results_when_filtering_with_an_or_statement()
+  {
     String expectedQueryString = 'SELECT Type, COUNT(Id) COUNT__Id FROM Account WHERE (AnnualRevenue = null OR Type = null) AND ParentId != null GROUP BY Type';
 
     AggregateQuery aggregateQuery = new AggregateQuery(Schema.Account.SObjectType)
@@ -132,12 +135,14 @@ private class AggregateQuery_Tests {
   }
 
   @IsTest
-  static void it_should_cache_results() {
+  static void it_should_cache_results()
+  {
     AggregateQuery aggregateQuery = new AggregateQuery(Schema.Opportunity.SObjectType);
     aggregateQuery.cacheResults();
     System.assertEquals(0, System.Limits.getQueries());
 
-    for (Integer i = 0; i < 3; i++) {
+    for (Integer i = 0; i < 3; i++)
+    {
       aggregateQuery.getResults();
     }
 
@@ -145,7 +150,8 @@ private class AggregateQuery_Tests {
   }
 
   @IsTest
-  static void it_should_group_by_cube() {
+  static void it_should_group_by_cube()
+  {
     String expectedQueryString = 'SELECT Type, StageName, SUM(Amount) SUM__Amount FROM Opportunity GROUP BY CUBE(Type, StageName)';
 
     AggregateQuery aggregateQuery = new AggregateQuery(Schema.Opportunity.SObjectType)
@@ -161,7 +167,8 @@ private class AggregateQuery_Tests {
   }
 
   @IsTest
-  static void it_should_group_by_rollup() {
+  static void it_should_group_by_rollup()
+  {
     String expectedQueryString = 'SELECT Type, StageName, SUM(Amount) SUM__Amount FROM Opportunity GROUP BY ROLLUP(Type, StageName)';
 
     AggregateQuery aggregateQuery = new AggregateQuery(Schema.Opportunity.SObjectType)
@@ -177,7 +184,8 @@ private class AggregateQuery_Tests {
   }
 
   @IsTest
-  static void it_should_group_by_having_aggregate() {
+  static void it_should_group_by_having_aggregate()
+  {
     String expectedQueryString = 'SELECT Name, COUNT(Id) COUNT__Id FROM Account GROUP BY Name HAVING COUNT(Id) > 2';
 
     AggregateQuery aggregateQuery = new AggregateQuery(Schema.Account.SObjectType)
@@ -217,7 +225,8 @@ private class AggregateQuery_Tests {
   }
 
   @IsTest
-  static void it_should_group_by_a_date_function() {
+  static void it_should_group_by_a_date_function()
+  {
     String expectedQueryString = 'SELECT CALENDAR_MONTH(CloseDate), COUNT(Id) COUNT__Id FROM Opportunity GROUP BY CALENDAR_MONTH(CloseDate)';
 
     AggregateQuery aggregateQuery = new AggregateQuery(Schema.Opportunity.SObjectType)
@@ -231,7 +240,8 @@ private class AggregateQuery_Tests {
   }
 
   @IsTest
-  static void it_should_run_with_system_mode() {
+  static void it_should_run_with_system_mode()
+  {
     String expectedQueryString = 'SELECT COUNT(Id) COUNT__Id FROM Opportunity';
 
     AggregateQuery aggregateQuery = new AggregateQuery(Schema.Opportunity.SObjectType)
@@ -242,10 +252,14 @@ private class AggregateQuery_Tests {
     List<Schema.AggregateResult> expectedResults = Database.query(expectedQueryString);
     List<Schema.AggregateResult> returnedResults;
     Exception caughtException;
-    System.runAs(minimumAccessUser()) {
-        try {
+    System.runAs(minimumAccessUser())
+    {
+        try
+        {
             returnedResults = aggregateQuery.getResults();
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             caughtException = e;
         }
     }
@@ -254,7 +268,8 @@ private class AggregateQuery_Tests {
   }
 
   @IsTest
-  static void it_should_run_with_user_mode() {
+  static void it_should_run_with_user_mode()
+  {
     String expectedQueryString = 'SELECT COUNT(Id) COUNT__Id FROM Opportunity';
 
     AggregateQuery aggregateQuery = new AggregateQuery(Schema.Opportunity.SObjectType)
@@ -265,10 +280,14 @@ private class AggregateQuery_Tests {
     List<Schema.AggregateResult> expectedResults = Database.query(expectedQueryString);
     List<Schema.AggregateResult> returnedResults;
     Exception caughtException;
-    System.runAs(minimumAccessUser()) {
-        try {
+    System.runAs(minimumAccessUser())
+    {
+        try
+        {
             returnedResults = aggregateQuery.getResults();
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             caughtException = e;
         }
     }
@@ -277,7 +296,8 @@ private class AggregateQuery_Tests {
   }
 
   @IsTest
-  static void it_should_build_a_ridiculous_query_string() {
+  static void it_should_build_a_ridiculous_query_string()
+  {
     String expectedQueryString =
       'SELECT Account.Type, StageName, AVG(Amount) AVG__Amount, COUNT(AccountId) COUNT__AccountId,' +
       ' COUNT_DISTINCT(AccountId) COUNT_DISTINCT__AccountId, COUNT_DISTINCT(OwnerId) COUNT_DISTINCT__OwnerId, COUNT_DISTINCT(Type) COUNT_DISTINCT__Type,' +
@@ -398,10 +418,12 @@ private class AggregateQuery_Tests {
     // TEST
     aggregateQuery.removeBind('dateFilter');
     Exception caughtException;
-    try {
+    try
+    {
       List<Schema.AggregateResult> returnedResults = aggregateQuery.getResults();
     }
-    catch (Exception e) {
+    catch (Exception e)
+    {
       caughtException = e;
     }
 
@@ -425,10 +447,12 @@ private class AggregateQuery_Tests {
     // TEST
     aggregateQuery.clearBinds();
     Exception caughtException;
-    try {
+    try
+    {
       List<Schema.AggregateResult> returnedResults = aggregateQuery.getResults();
     }
-    catch (Exception e) {
+    catch (Exception e)
+    {
       caughtException = e;
     }
 
@@ -438,7 +462,8 @@ private class AggregateQuery_Tests {
     System.Assert.areEqual('Key \'maxDateFilter\' does not exist in the bindMap', caughtException.getMessage());
   }
 
-  static User minimumAccessUser() {
+  static User minimumAccessUser()
+  {
     return new User(
       Alias = 'newUser',
       Email = 'newuser@testorg.com',

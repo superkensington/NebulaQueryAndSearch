@@ -45,11 +45,13 @@ global abstract class SOSL {
   protected System.AccessLevel accessLevel;
   protected SOSL.SearchGroup searchGroup;
 
-  protected SOSL(String searchTerm, Query sobjectQuery) {
+  protected SOSL(String searchTerm, Query sobjectQuery)
+  {
     this(searchTerm, new List<Query>{ sobjectQuery });
   }
 
-  protected SOSL(String searchTerm, List<Query> sobjectQueries) {
+  protected SOSL(String searchTerm, List<Query> sobjectQueries)
+  {
     this.searchTerm = String.escapeSingleQuotes(searchTerm);
     this.sobjectQueries = sobjectQueries;
 
@@ -61,13 +63,16 @@ global abstract class SOSL {
     this.accessLevel = System.AccessLevel.SYSTEM_MODE;
   }
 
-  public Set<Schema.SObjectType> getSObjectTypes() {
-    if (this.sobjectTypes != null) {
+  public Set<Schema.SObjectType> getSObjectTypes()
+  {
+    if (this.sobjectTypes != null)
+    {
       return this.sobjectTypes;
     }
 
     this.sobjectTypes = new Set<Schema.SObjectType>();
-    for (Query query : this.sobjectQueries) {
+    for (Query query : this.sobjectQueries)
+    {
       this.sobjectTypes.add(query.getSObjectType());
     }
     return this.sobjectTypes;
@@ -76,44 +81,56 @@ global abstract class SOSL {
   // TODO decide if this should be global
   global abstract String getSearch();
 
-  protected SObject doGetFirstResult() {
+  protected SObject doGetFirstResult()
+  {
     List<List<SObject>> results = this.doGetResults();
     return results.isEmpty() || results[0].isEmpty() ? null : results[0][0];
   }
 
-  protected List<SObject> doGetFirstResults() {
+  protected List<SObject> doGetFirstResults()
+  {
     List<List<SObject>> results = this.doGetResults();
     return results.isEmpty() ? null : results[0];
   }
 
-  protected List<List<SObject>> doGetResults() {
-    if (this.cacheResults) {
+  protected List<List<SObject>> doGetResults()
+  {
+    if (this.cacheResults)
+    {
       return this.getCachedResults();
-    } else {
+    }
+    else
+    {
       return System.Search.query(this.getSearch(), this.doGetAccessLevel());
     }
   }
 
-  protected String doGetSearchGroupString() {
+  protected String doGetSearchGroupString()
+  {
     return ' IN ' + this.searchGroup.name().replace('_', ' ');
   }
 
-  protected String doGetReturningSObjectsString() {
-    if (this.sobjectQueries.isEmpty()) {
+  protected String doGetReturningSObjectsString()
+  {
+    if (this.sobjectQueries.isEmpty())
+    {
       return '';
     }
 
     List<String> queryStrings = new List<String>();
     this.sobjectQueries.sort();
-    for (Query query : this.sobjectQueries) {
+    for (Query query : this.sobjectQueries)
+    {
       queryStrings.add(query.getSearchQuery());
     }
     return ' RETURNING ' + String.join(queryStrings, ', ');
   }
 
-  protected String doGetWithClauseString() {
+  protected String doGetWithClauseString()
+  {
     List<String> combinedWithClauses = new List<String>(this.withClauses);
-    if (!this.withDataCategoryClauses.isEmpty()) {
+    if (!this.withDataCategoryClauses.isEmpty())
+    {
       String withDataCategoryClausesString = 'DATA CATEGORY ' + String.join(withDataCategoryClauses, ' AND ');
       combinedWithClauses.add(withDataCategoryClausesString);
     }
@@ -121,20 +138,24 @@ global abstract class SOSL {
     return this.withClauses.isEmpty() ? '' : ' WITH ' + String.join(this.withClauses, ' WITH ');
   }
 
-  protected System.AccessLevel doGetAccessLevel() {
+  protected System.AccessLevel doGetAccessLevel()
+  {
     return this.accessLevel ?? System.AccessLevel.SYSTEM_MODE;
   }
 
-  protected String doGetUpdateArticleReportingString() {
+  protected String doGetUpdateArticleReportingString()
+  {
     return this.articleReporting == null ? '' : ' UPDATE ' + this.articleReporting.name();
   }
 
-  private List<List<SObject>> getCachedResults() {
+  private List<List<SObject>> getCachedResults()
+  {
     String searchQuery = this.getSearch();
     Integer hashCode = searchQuery.hashCode();
 
     Boolean isCached = cachedSearchResultsByHashCode.containsKey(hashCode);
-    if (!isCached) {
+    if (!isCached)
+    {
       cachedSearchResultsByHashCode.put(
         hashCode,
         System.Search.query(searchQuery, this.doGetAccessLevel())
@@ -144,7 +165,8 @@ global abstract class SOSL {
     // Always return a deep clone so the original cached version is never modified
     List<List<SObject>> cachedResults = cachedSearchResultsByHashCode.get(hashCode);
     List<List<SObject>> deepClonedResults = new List<List<SObject>>();
-    for (List<SObject> cachedListOfResults : cachedResults) {
+    for (List<SObject> cachedListOfResults : cachedResults)
+    {
       deepClonedResults.add(cachedListOfResults.deepClone(true, true, true));
     }
     return deepClonedResults;
