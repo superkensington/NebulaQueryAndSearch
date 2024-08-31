@@ -44,7 +44,7 @@ private class Query_Tests {
 
     Query simpleAccountQuery = new Query(Schema.Account.SObjectType);
 
-    System.assertEquals(expectedQueryString, simpleAccountQuery.getQuery());
+    System.Assert.areEqual(expectedQueryString, simpleAccountQuery.getQuery());
     List<Account> accounts = simpleAccountQuery.getResults();
   }
 
@@ -68,15 +68,15 @@ private class Query_Tests {
     String expectedQueryString =
       'SELECT Alias, Email, Id, IsActive, Profile.Name, ProfileId' +
       ' FROM User USING SCOPE MINE' +
-      ' WHERE CreatedDate <= LAST_WEEK' +
-      ' AND Email != null' +
-      ' AND IsActive = true' +
-      ' AND LastLoginDate >= LAST_N_DAYS:3' +
-      ' AND LastModifiedDate <= ' +
-      now.format('yyyy-MM-dd\'T\'HH:mm:ss\'Z\'', 'Greenwich Mean Time') +
+      ' WHERE IsActive = true' +
       ' AND Profile.Id != \'' +
       System.UserInfo.getProfileId() +
       '\'' +
+      ' AND LastModifiedDate <= ' +
+      now.format('yyyy-MM-dd\'T\'HH:mm:ss\'Z\'', 'Greenwich Mean Time') +
+      ' AND LastLoginDate >= LAST_N_DAYS:3' +
+      ' AND CreatedDate <= LAST_WEEK' +
+      ' AND Email != null' +
       ' ORDER BY Profile.CreatedBy.LastModifiedDate ASC NULLS FIRST, Name ASC NULLS FIRST, Email ASC NULLS FIRST' +
       ' LIMIT 100 OFFSET 1 FOR VIEW';
     List<Schema.SObjectField> fieldsToQuery = new List<Schema.SObjectField>{ Schema.User.IsActive, Schema.User.Alias };
@@ -103,7 +103,7 @@ private class Query_Tests {
       .offsetBy(1)
       .forView();
 
-    System.assertEquals(expectedQueryString, userQuery.getQuery());
+    System.Assert.areEqual(expectedQueryString, userQuery.getQuery());
     List<User> expectedResults = Database.query(expectedQueryString);
     List<User> returnedResults = userQuery.getResults();
     System.Assert.areEqual(expectedResults, returnedResults);
@@ -122,7 +122,7 @@ private class Query_Tests {
 
     Query userQuery = new Query(Schema.User.SObjectType).addField(queryField).limitTo(1);
 
-    System.assertEquals(expectedQueryString, userQuery.getQuery());
+    System.Assert.areEqual(expectedQueryString, userQuery.getQuery());
     List<User> expectedResults = Database.query(expectedQueryString);
     List<User> returnedResults = userQuery.getResults();
     System.Assert.areEqual(expectedResults, returnedResults);
@@ -135,7 +135,7 @@ private class Query_Tests {
 
     Query accountQuery = new Query(Schema.Account.SObjectType).addField(new SOQL.QueryField(Schema.Account.OwnerId));
 
-    System.assertEquals(expectedQueryString, accountQuery.getQuery());
+    System.Assert.areEqual(expectedQueryString, accountQuery.getQuery());
     List<Account> accounts = accountQuery.getResults();
   }
 
@@ -185,7 +185,7 @@ private class Query_Tests {
 
     System.Test.stopTest();
 
-    System.assertEquals(expectedQuery, taskQuery.getQuery());
+    System.Assert.areEqual(expectedQuery, taskQuery.getQuery());
   }
 
   @IsTest
@@ -195,7 +195,7 @@ private class Query_Tests {
 
     Query leadQuery = new Query(Schema.Lead.SObjectType).addField(new SOQL.QueryField(Schema.Lead.OwnerId));
 
-    System.assertEquals(expectedQueryString, leadQuery.getQuery());
+    System.Assert.areEqual(expectedQueryString, leadQuery.getQuery());
     List<Lead> expectedResults = Database.query(expectedQueryString);
     List<Lead> returnedResults = leadQuery.getResults();
     System.Assert.areEqual(expectedResults, returnedResults);
@@ -212,7 +212,7 @@ private class Query_Tests {
       .includeRelatedRecords(Schema.Contact.AccountId, contactQuery)
       .addField(new SOQL.QueryField(Schema.Account.Type));
 
-    System.assertEquals(expectedQueryString, accountQuery.getQuery());
+    System.Assert.areEqual(expectedQueryString, accountQuery.getQuery());
     List<Account> accounts = accountQuery.getResults();
   }
 
@@ -320,7 +320,7 @@ private class Query_Tests {
 
     Query leadQuery = new Query(Schema.Lead.SObjectType).orderByField(Schema.Lead.CreatedDate);
 
-    System.assertEquals(expectedQueryString, leadQuery.getQuery());
+    System.Assert.areEqual(expectedQueryString, leadQuery.getQuery());
     List<Lead> expectedResults = Database.query(expectedQueryString);
     List<Lead> returnedResults = leadQuery.getResults();
     System.Assert.areEqual(expectedResults, returnedResults);
@@ -333,7 +333,7 @@ private class Query_Tests {
 
     Query leadQuery = new Query(Schema.Lead.SObjectType).forReference();
 
-    System.assertEquals(expectedQueryString, leadQuery.getQuery());
+    System.Assert.areEqual(expectedQueryString, leadQuery.getQuery());
     List<Lead> expectedResults = Database.query(expectedQueryString);
     List<Lead> returnedResults = leadQuery.getResults();
     System.Assert.areEqual(expectedResults, returnedResults);
@@ -346,7 +346,7 @@ private class Query_Tests {
 
     Query leadQuery = new Query(Schema.Lead.SObjectType).forUpdate();
 
-    System.assertEquals(expectedQueryString, leadQuery.getQuery());
+    System.Assert.areEqual(expectedQueryString, leadQuery.getQuery());
     List<Lead> expectedResults = Database.query(expectedQueryString);
     List<Lead> returnedResults = leadQuery.getResults();
     System.Assert.areEqual(expectedResults, returnedResults);
@@ -359,7 +359,7 @@ private class Query_Tests {
 
     Query leadQuery = new Query(Schema.Lead.SObjectType).forView();
 
-    System.assertEquals(expectedQueryString, leadQuery.getQuery());
+    System.Assert.areEqual(expectedQueryString, leadQuery.getQuery());
     List<Lead> expectedResults = Database.query(expectedQueryString);
     List<Lead> returnedResults = leadQuery.getResults();
     System.Assert.areEqual(expectedResults, returnedResults);
@@ -388,12 +388,12 @@ private class Query_Tests {
     Query userQuery = new Query(Schema.User.SObjectType).limitTo(1);
 
     // First, verify that caching is not enabled by default
-    System.assertEquals(0, System.Limits.getQueries());
+    System.Assert.areEqual(0, System.Limits.getQueries());
     for (Integer i = 0; i < loops; i++)
     {
       userQuery.getResults();
     }
-    System.assertEquals(loops, System.Limits.getQueries());
+    System.Assert.areEqual(loops, System.Limits.getQueries());
 
     System.Test.startTest();
 
@@ -402,13 +402,13 @@ private class Query_Tests {
     {
       userQuery.getResults();
     }
-    System.assertEquals(1, System.Limits.getQueries());
+    System.Assert.areEqual(1, System.Limits.getQueries());
 
     System.Test.stopTest();
   }
 
   @IsTest
-  static void it_will_set_a_bind_variable()
+  static void it_will_set_a_bind_key()
   {
     // SETUP
     String expectedQueryString = 'SELECT CreatedDate, Id, Name FROM Account WHERE CreatedDate >= :dateFilter ORDER BY CreatedDate ASC NULLS FIRST LIMIT 1';
@@ -439,10 +439,10 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_will_set_multiple_bind_variables()
+  static void it_will_set_multiple_bind_keys()
   {
     // SETUP
-    String expectedQueryString = 'SELECT CreatedDate, Id, Name FROM Account WHERE CreatedDate < :maxDateFilter AND CreatedDate >= :minDateFilter ORDER BY CreatedDate ASC NULLS FIRST LIMIT 1';
+    String expectedQueryString = 'SELECT CreatedDate, Id, Name FROM Account WHERE CreatedDate >= :minDateFilter AND CreatedDate < :maxDateFilter ORDER BY CreatedDate ASC NULLS FIRST LIMIT 1';
     List<Account> expectedResults = Database.queryWithBinds(
       expectedQueryString,
       new Map<String, Object> {
@@ -474,58 +474,36 @@ private class Query_Tests {
   }
 
   @IsTest
-  static void it_will_remove_a_bind_variable()
+  static void it_will_remove_a_bind_key()
   {
     // SETUP
-    String expectedQueryString = 'SELECT CreatedDate, Id, Name FROM Account WHERE CreatedDate >= :dateFilter';
+    String expectedQueryString = 'SELECT CreatedDate, Id, Name FROM Account WHERE CreatedDate >= 2000-01-01T05:00:00Z';
     Query accountQuery = new Query(Schema.Account.SObjectType)
       .addField(Schema.Account.CreatedDate)
-      .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.GREATER_THAN_OR_EQUAL_TO, Date.today().addMonths(-1), 'dateFilter'));
+      .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.GREATER_THAN_OR_EQUAL_TO, Datetime.newInstance(2000, 1, 1), 'dateFilter'));
 
     // TEST
     accountQuery.removeBind('dateFilter');
-    Exception caughtException;
-    try
-    {
-      List<Account> returnedResults = accountQuery.getResults();
-    }
-    catch (Exception e)
-    {
-      caughtException = e;
-    }
 
     // VERIFY
     System.Assert.areEqual(expectedQueryString, accountQuery.getQuery());
-    System.Assert.isInstanceOfType(caughtException, QueryException.class);
-    System.Assert.areEqual('Key \'dateFilter\' does not exist in the bindMap', caughtException.getMessage());
   }
 
   @IsTest
-  static void it_will_clear_all_bind_variables()
+  static void it_will_clear_all_bind_keys()
   {
     // SETUP
-    String expectedQueryString = 'SELECT CreatedDate, Id, Name FROM Account WHERE CreatedDate < :maxDateFilter AND CreatedDate >= :minDateFilter';
+    String expectedQueryString = 'SELECT CreatedDate, Id, Name FROM Account WHERE CreatedDate >= 2000-01-01T05:00:00Z AND CreatedDate < 2001-01-01T05:00:00Z';
     Query accountQuery = new Query(Schema.Account.SObjectType)
       .addField(Schema.Account.CreatedDate)
-      .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.GREATER_THAN_OR_EQUAL_TO, Date.today().addMonths(-1), 'minDateFilter'))
-      .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.LESS_THAN, Date.today().addDays(-1), 'maxDateFilter'));
+      .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.GREATER_THAN_OR_EQUAL_TO, Datetime.newInstance(2000, 1, 1), 'minDateFilter'))
+      .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.LESS_THAN, Datetime.newInstance(2001, 1, 1), 'maxDateFilter'));
 
     // TEST
     accountQuery.clearBinds();
-    Exception caughtException;
-    try
-    {
-      List<Account> returnedResults = accountQuery.getResults();
-    }
-    catch (Exception e)
-    {
-      caughtException = e;
-    }
 
     // VERIFY
     System.Assert.areEqual(expectedQueryString, accountQuery.getQuery());
-    System.Assert.isInstanceOfType(caughtException, QueryException.class);
-    System.Assert.areEqual('Key \'maxDateFilter\' does not exist in the bindMap', caughtException.getMessage());
   }
 
   static User minimumAccessUser()
@@ -542,4 +520,185 @@ private class Query_Tests {
       UserName = 'newuser@testorg.com'
     );
   }
+
+  @IsTest
+  static void it_will_generate_a_bind_key()
+  {
+    // SETUP
+    String expectedQueryString = 'SELECT CreatedDate, Id, Name FROM Account WHERE CreatedDate >= :bindVar0 ORDER BY CreatedDate ASC NULLS FIRST LIMIT 1';
+    List<Account> expectedResults = Database.queryWithBinds(
+      expectedQueryString,
+      new Map<String, Object> {
+        'bindVar0' => Date.today().addDays(-1)
+      },
+      System.AccessLevel.SYSTEM_MODE
+    );
+    Query accountQuery = new Query(Schema.Account.SObjectType)
+      .generateBindVariableKeys()
+      .addField(Schema.Account.CreatedDate)
+      .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.GREATER_THAN_OR_EQUAL_TO, Date.today().addMonths(-1)))
+      .orderByField(Schema.Account.CreatedDate, SOQL.SortOrder.ASCENDING)
+      .limitTo(1);
+
+    // TEST
+    List<Account> returnedResults = accountQuery.getResults();
+
+    // VERIFY
+    System.Assert.areEqual(expectedQueryString, accountQuery.getQuery());
+    System.Assert.areEqual(expectedResults, returnedResults);
+    if (!returnedResults.isEmpty())
+    {
+      System.Assert.isFalse(returnedResults[0].CreatedDate < Date.today().addDays(-1));
+    }
+  }
+
+  @IsTest
+  static void it_will_generate_a_bind_key_when_instructed_before_filter_is_added()
+  {
+    // SETUP
+    String expectedQueryString = 'SELECT CreatedDate, Id, Name FROM Account WHERE CreatedDate >= :bindVar0 ORDER BY CreatedDate ASC NULLS FIRST LIMIT 1';
+    List<Account> expectedResults = Database.queryWithBinds(
+      expectedQueryString,
+      new Map<String, Object> {
+        'bindVar0' => Date.today().addDays(-1)
+      },
+      System.AccessLevel.SYSTEM_MODE
+    );
+    Query accountQuery = new Query(Schema.Account.SObjectType)
+      .generateBindVariableKeys()
+      .addField(Schema.Account.CreatedDate)
+      .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.GREATER_THAN_OR_EQUAL_TO, Date.today().addMonths(-1)))
+      .orderByField(Schema.Account.CreatedDate, SOQL.SortOrder.ASCENDING)
+      .limitTo(1);
+
+    // TEST
+    List<Account> returnedResults = accountQuery.getResults();
+
+    // VERIFY
+    System.Assert.areEqual(expectedQueryString, accountQuery.getQuery());
+    System.Assert.areEqual(expectedResults, returnedResults);
+    if (!returnedResults.isEmpty())
+    {
+      System.Assert.isFalse(returnedResults[0].CreatedDate < Date.today().addDays(-1));
+    }
+  }
+
+  @IsTest
+  static void it_will_generate_a_bind_key_when_instructed_after_filter_is_added()
+  {
+    // SETUP
+    String expectedQueryString = 'SELECT CreatedDate, Id, Name FROM Account WHERE CreatedDate >= :bindVar0 ORDER BY CreatedDate ASC NULLS FIRST LIMIT 1';
+    List<Account> expectedResults = Database.queryWithBinds(
+      expectedQueryString,
+      new Map<String, Object> {
+        'bindVar0' => Date.today().addDays(-1)
+      },
+      System.AccessLevel.SYSTEM_MODE
+    );
+    Query accountQuery = new Query(Schema.Account.SObjectType)
+      .addField(Schema.Account.CreatedDate)
+      .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.GREATER_THAN_OR_EQUAL_TO, Date.today().addMonths(-1)))
+      .orderByField(Schema.Account.CreatedDate, SOQL.SortOrder.ASCENDING)
+      .limitTo(1)
+      .generateBindVariableKeys();
+
+    // TEST
+    List<Account> returnedResults = accountQuery.getResults();
+
+    // VERIFY
+    System.Assert.areEqual(expectedQueryString, accountQuery.getQuery());
+    System.Assert.areEqual(expectedResults, returnedResults);
+    if (!returnedResults.isEmpty())
+    {
+      System.Assert.isFalse(returnedResults[0].CreatedDate < Date.today().addDays(-1));
+    }
+  }
+
+  @IsTest
+  static void it_will_not_generate_a_bind_key_if_already_specified()
+  {
+    // SETUP
+    String expectedQueryString = 'SELECT CreatedDate, Id, Name FROM Account WHERE CreatedDate >= :dateFilter ORDER BY CreatedDate ASC NULLS FIRST LIMIT 1';
+    List<Account> expectedResults = Database.queryWithBinds(
+      expectedQueryString,
+      new Map<String, Object> {
+        'dateFilter' => Date.today().addDays(-1)
+      },
+      System.AccessLevel.SYSTEM_MODE
+    );
+    Query accountQuery = new Query(Schema.Account.SObjectType)
+      .addField(Schema.Account.CreatedDate)
+      .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.GREATER_THAN_OR_EQUAL_TO, Date.today().addMonths(-1), 'dateFilter'))
+      .orderByField(Schema.Account.CreatedDate, SOQL.SortOrder.ASCENDING)
+      .limitTo(1)
+      .generateBindVariableKeys();
+
+    // TEST
+    List<Account> returnedResults = accountQuery.getResults();
+
+    // VERIFY
+    System.Assert.areEqual(expectedQueryString, accountQuery.getQuery());
+    System.Assert.areEqual(expectedResults, returnedResults);
+    if (!returnedResults.isEmpty())
+    {
+      System.Assert.isFalse(returnedResults[0].CreatedDate < Date.today().addDays(-1));
+    }
+  }
+
+  @IsTest
+  static void it_will_generate_a_bind_key_if_removed()
+  {
+    // SETUP
+    String expectedQueryString = 'SELECT CreatedDate, Id, Name FROM Account WHERE CreatedDate >= :bindVar0 ORDER BY CreatedDate ASC NULLS FIRST LIMIT 1';
+    List<Account> expectedResults = Database.queryWithBinds(
+      expectedQueryString,
+      new Map<String, Object> {
+        'bindVar0' => Date.today().addDays(-1)
+      },
+      System.AccessLevel.SYSTEM_MODE
+    );
+    Query accountQuery = new Query(Schema.Account.SObjectType)
+      .addField(Schema.Account.CreatedDate)
+      .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.GREATER_THAN_OR_EQUAL_TO, Date.today().addMonths(-1), 'dateFilter'))
+      .orderByField(Schema.Account.CreatedDate, SOQL.SortOrder.ASCENDING)
+      .limitTo(1)
+      .removeBind('dateFilter')
+      .generateBindVariableKeys();
+
+    // TEST
+    List<Account> returnedResults = accountQuery.getResults();
+
+    // VERIFY
+    System.Assert.areEqual(expectedQueryString, accountQuery.getQuery());
+    System.Assert.areEqual(expectedResults, returnedResults);
+    if (!returnedResults.isEmpty())
+    {
+      System.Assert.isFalse(returnedResults[0].CreatedDate < Date.today().addDays(-1));
+    }
+  }
+
+  @IsTest
+  static void it_will_construct_a_where_clause_based_on_custom_logic()
+  {
+    // SETUP
+    String expectedQueryString = 'SELECT Id, Name FROM Account WHERE (CreatedDate = :bindVar1 OR LastModifiedDate = :bindVar0) AND (Name LIKE :bindVar3 OR Parent.Name LIKE :bindVar2)';
+    Query accountQuery = new Query(Schema.Account.SObjectType)
+      .generateBindVariableKeys()
+      .filterWhere(new SOQL.QueryFilter(Schema.Account.LastModifiedDate, SOQL.Operator.EQUALS, Date.today()))
+      .orFilterWhere(
+        new List<SOQL.QueryFilter> {
+          new SOQL.QueryFilter(new SOQL.QueryField(Schema.Account.getSObjectType(), 'Parent.Name'), SOQL.Operator.IS_LIKE, 'Test%'),
+          new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.EQUALS, Date.today().addDays(-1))
+        }
+      )
+      .filterWhere(new SOQL.QueryFilter(Schema.Account.Name, SOQL.Operator.IS_LIKE, 'Smith%'))
+      .setWhereFilterLogic('(2 OR 1) AND (4 OR 3)');
+
+    // TEST
+    String actualQueryString = accountQuery.getQuery();
+
+    // VERIFY
+    System.Assert.areEqual(expectedQueryString, actualQueryString);
+  }
+
 }

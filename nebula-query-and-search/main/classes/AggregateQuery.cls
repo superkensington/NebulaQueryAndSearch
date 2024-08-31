@@ -16,16 +16,18 @@ global class AggregateQuery extends SOQL {
 
     private SOQL.GroupingDimension groupingDimension;
     private List<AggregateField> aggregateFields;
-    private List<String> havingConditions;
+    private List<AggregateQueryFilter> havingClauseFilters;
+    protected String havingClauseFilterLogic;
     private String countQuery;
 
-      global AggregateQuery(Schema.SObjectType sObjectType)
-      {
+    global AggregateQuery(Schema.SObjectType sObjectType)
+    {
         super(sObjectType, false);
 
         this.aggregateFields = new List<AggregateField>();
-        this.havingConditions = new List<String>();
-      }
+        this.havingClauseFilters = new List<AggregateQueryFilter>();
+        this.havingClauseFilterLogic = '';
+    }
 
     global AggregateQuery groupByField(Schema.SObjectField field)
     {
@@ -102,26 +104,27 @@ global class AggregateQuery extends SOQL {
 
     global AggregateQuery havingAggregate(SOQL.Aggregate aggregateFunction, SOQL.QueryField queryField, SOQL.Operator operator, Object value)
     {
-        return this.havingAggregate(aggregateFunction, queryField, operator, value, null);
+        return this.havingAggregate(aggregateFunction, queryField, operator, value, this.generateNextBindVariableKey());
     }
 
     global AggregateQuery havingAggregate(SOQL.Aggregate aggregateFunction, SOQL.QueryField queryField, SOQL.Operator operator, Object value, String bindWithKey)
     {
-        this.havingConditions.add(
-        String.format(
-            '{0}({1}) {2} {3}',
-            new List<String> {
-                aggregateFunction.name(),
-                queryField.toString(),
-                SOQL.getOperatorValue(operator),
-                (String.isNotBlank(bindWithKey) ? ':' + bindWithKey : new QueryArgument(value).toString())
-            }
-        )
+        this.havingClauseFilters.add(
+            new AggregateQueryFilter(aggregateFunction, queryField, operator, value, bindWithKey)
         );
-        if (String.isNotBlank(bindWithKey))
-        {
-            this.bindsMap.put(bindWithKey, value);
-        }
+        this.havingClauseFilterLogic += (this.havingClauseFilters.size() == 1 ? '1' : ' AND ' + this.havingClauseFilters.size());
+        return (AggregateQuery)super.setHasChanged();
+    }
+
+    global AggregateQuery orHavingAggregate(List<AggregateQueryFilter> filters)
+    {
+        this.havingClauseFilterLogic = this.doOrFilter(filters, this.havingClauseFilters, this.havingClauseFilterLogic);
+        return (AggregateQuery)super.setHasChanged();
+    }
+
+    global AggregateQuery setHavingFilterLogic(String filterLogic)
+    {
+        this.havingClauseFilterLogic = filterLogic;
         return (AggregateQuery)super.setHasChanged();
     }
 
@@ -162,9 +165,15 @@ global class AggregateQuery extends SOQL {
         return this;
     }
 
-    global AggregateQuery withAccessLevel(System.AccessLevel mode)
+    global AggregateQuery setWhereFilterLogic(String filterLogic)
     {
-        super.doWithAccessLevel(mode);
+        super.doSetWhereFilterLogic(filterLogic);
+        return (AggregateQuery)super.setHasChanged();
+    }
+
+    global AggregateQuery withAccessLevel(System.AccessLevel accessLevel)
+    {
+        super.doWithAccessLevel(accessLevel);
         return this;
     }
 
@@ -267,6 +276,12 @@ global class AggregateQuery extends SOQL {
         return this;
     }
 
+    global AggregateQuery generateBindVariableKeys()
+    {
+        super.doGenerateBindVariableKeys();
+        return this;
+    }
+
     global AggregateQuery cacheResults()
     {
         super.doCacheResults();
@@ -300,7 +315,7 @@ global class AggregateQuery extends SOQL {
             super.doGetUsingScopeString() +
             super.doGetWhereClauseString() +
             this.getGroupByString() +
-            this.getHavingString() +
+            this.getHavingClauseString() +
             super.doGetOrderByString() +
             super.doGetLimitCountString() +
             super.doGetOffetString();
@@ -323,7 +338,7 @@ global class AggregateQuery extends SOQL {
             super.doGetUsingScopeString() +
             super.doGetWhereClauseString() +
             this.getGroupByString() +
-            this.getHavingString() +
+            this.getHavingClauseString() +
             super.doGetOrderByString() +
             super.doGetLimitCountString() +
             super.doGetOffetString();
@@ -383,9 +398,9 @@ global class AggregateQuery extends SOQL {
         return String.isEmpty(queryFieldString) ? '' : groupByTextString + queryFieldString + groupingDimensionClosingString;
     }
 
-    private String getHavingString()
+    private String getHavingClauseString()
     {
-        return this.havingConditions.isEmpty() ? '' : ' HAVING ' + String.join(this.havingConditions, ', ');
+        return this.doGetFilterableClauseString('HAVING', this.havingClauseFilters, this.havingClauseFilterLogic);
     }
 
     private class AggregateField {
@@ -412,6 +427,32 @@ global class AggregateQuery extends SOQL {
             // Example: MIN(Schema.Lead.MyField__c) is auto-aliased to MyField__c__MIN
             return aggregateFunction.name() + '(' + fieldApiName + ') ' + fieldAlias;
         }
+
+    }
+
+    global class AggregateQueryFilter extends SOQL.QueryFilter {
+
+        private SOQL.Aggregate aggregateFunction;
+
+        public AggregateQueryFilter(SOQL.Aggregate aggregateFunction, SOQL.QueryField queryField, SOQL.Operator operator, Object value, String bindKey)
+        {
+            super(queryField, operator, value, bindKey);
+            this.aggregateFunction = aggregateFunction;
+        }
+
+        public override String toString()
+        {
+            return String.format(
+                '{0}({1}) {2} {3}',
+                new List<String> {
+                    this.aggregateFunction.name(),
+                    this.queryField.toString(),
+                    SOQL.getOperatorValue(this.operator),
+                    (String.isNotBlank(this.bindKey) ? ':' + this.bindKey : new QueryArgument(this.value).toString())
+                }
+            );
+        }
+
     }
 
 }

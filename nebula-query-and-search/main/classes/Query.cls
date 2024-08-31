@@ -273,6 +273,12 @@ global class Query extends SOQL {
     return this;
   }
 
+  global Query setWhereFilterLogic(String filterLogic)
+  {
+    super.doSetWhereFilterLogic(filterLogic);
+    return this;
+  }
+
   //global Query filterWhereInSubquery(Schema.SObjectType childSObjectType, Schema.SObjectField lookupFieldOnChildSObject)
   //{
   //  this.whereFilters.add('Id IN (SELECT ' + lookupFieldOnChildSObject + ' FROM ' + childSObjectType + ')');
@@ -387,6 +393,12 @@ global class Query extends SOQL {
   global Query clearBinds()
   {
     super.doClearBinds();
+    return this;
+  }
+
+  global Query generateBindVariableKeys()
+  {
+    super.doGenerateBindVariableKeys();
     return this;
   }
 

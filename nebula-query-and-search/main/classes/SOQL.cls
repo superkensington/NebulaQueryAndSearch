@@ -181,7 +181,8 @@ global abstract class SOQL implements Comparable {
   protected Map<SOQL.QueryField, SOQL.FieldCategory> includedQueryFieldsAndCategory;
   protected Set<SOQL.QueryField> excludedQueryFields;
   protected Scope scope;
-  protected List<String> whereFilters;
+  protected List<QueryFilter> whereClauseFilters;
+  protected String whereClauseFilterLogic;
   protected System.AccessLevel accessLevel;
   protected List<String> orderByFieldApiNames;
   protected Integer limitCount;
@@ -190,6 +191,8 @@ global abstract class SOQL implements Comparable {
   protected Boolean sortQueryFields;
   protected Map<String, Object> bindsMap;
   protected Boolean cacheResults;
+  private Boolean generateBindVariableKeys;
+  private Integer generatedBindVariableKeyCounter;
 
   protected SOQL(Schema.SObjectType sobjectType, Boolean sortQueryFields)
   {
@@ -199,12 +202,15 @@ global abstract class SOQL implements Comparable {
     this.sobjectDescribe = this.sobjectType.getDescribe(Schema.SObjectDescribeOptions.DEFERRED);
     this.includedQueryFieldsAndCategory = new Map<SOQL.QueryField, SOQL.FieldCategory>();
     this.excludedQueryFields = new Set<SOQL.QueryField>();
-    this.whereFilters = new List<String>();
+    this.whereClauseFilters = new List<QueryFilter>();
+    this.whereClauseFilterLogic = '';
     this.orderByFieldApiNames = new List<String>();
     this.accessLevel = System.AccessLevel.SYSTEM_MODE;
     this.bindsMap = new Map<String, Object>();
     this.cacheResults = false;
     this.hasChanged = false;
+    this.generateBindVariableKeys = false;
+    this.generatedBindVariableKeyCounter = 0;
   }
 
   global Schema.SObjectType getSObjectType()
@@ -269,31 +275,39 @@ global abstract class SOQL implements Comparable {
 
     for (SOQL.QueryFilter filter : filters)
     {
-      this.whereFilters.add(filter.toString());
-      if (String.isNotBlank(filter.bindKey))
-      {
-        this.bindsMap.put(filter.bindKey, filter.value);
-      }
+      this.whereClauseFilters.add(filter);
+      this.whereClauseFilterLogic += (this.whereClauseFilters.size() == 1 ? '1' : ' AND ' + this.whereClauseFilters.size());
     }
-    this.setHasChanged();
   }
 
-  protected void doOrFilterWhere(List<SOQL.QueryFilter> filters)
+  protected String doOrFilter(List<SOQL.QueryFilter> newFilters, List<SOQL.QueryFilter> clauseFilters, String filterLogic)
   {
     if (filters?.isEmpty() != false)
     {
       return;
     }
 
-    filters.sort();
+    newFilters.sort();
 
-    List<String> orFilterPieces = new List<String>();
-    for (SOQL.QueryFilter filter : filters)
+    filterLogic += (clauseFilters.isEmpty() ? '' : ' AND ') + '(';
+    for (Integer i = 0; i < newFilters.size(); i++)
     {
-      orFilterPieces.add(filter.toString());
+        SOQL.QueryFilter filter = newFilters[i];
+        clauseFilters.add(filter);
+        filterLogic += (i == 0 ? '' : ' OR ') + clauseFilters.size();
     }
-    this.whereFilters.add('(' + String.join(orFilterPieces, ' OR ') + ')');
-    this.setHasChanged();
+    filterLogic += ')';
+    return filterLogic;
+  }
+
+  protected void doSetWhereFilterLogic(String filterLogic)
+  {
+    this.whereClauseFilterLogic = filterLogic;
+  }
+
+  protected void doOrFilterWhere(List<SOQL.QueryFilter> filters)
+  {
+    this.whereClauseFilterLogic = this.doOrFilter(filters, this.whereClauseFilters, this.whereClauseFilterLogic);
   }
 
   protected void doWithAccessLevel(System.AccessLevel accessLevel)
@@ -342,13 +356,34 @@ global abstract class SOQL implements Comparable {
   protected void doRemoveBind(String key)
   {
     this.bindsMap.remove(key);
+    for (QueryFilter filter : this.whereClauseFilters)
+    {
+      if (filter.bindKey == key)
+      {
+        filter.bindKey = null;
+      }
+    }
     this.setHasChanged();
   }
 
   protected void doClearBinds()
   {
     this.bindsMap.clear();
+    for (QueryFilter filter : this.whereClauseFilters)
+    {
+      filter.bindKey = null;
+    }
     this.setHasChanged();
+  }
+
+  protected void doGenerateBindVariableKeys()
+  {
+    this.generateBindVariableKeys = true;
+  }
+
+  protected String generateNextBindVariableKey()
+  {
+    return this.generateBindVariableKeys != true ? null : 'bindVar' + this.generatedBindVariableKeyCounter++;
   }
 
   protected SObject doGetFirstResult()
@@ -424,10 +459,56 @@ global abstract class SOQL implements Comparable {
     return this.scope == null ? '' : ' USING SCOPE ' + this.scope.name();
   }
 
+  protected String doGetFilterableClauseString(String clause, LIST<SOQL.QueryFilter> filters, String filterLogic)
+  {
+    List<String> filterStrings = new List<String>();
+    for (Soql.QueryFilter filter : filters)
+    {
+        filter.setBindKey(filter.getBindKey() ?? this.generateNextBindVariableKey());
+        if (String.isNotBlank(filter.getBindKey())) {
+          this.bindsMap.put(filter.getBindKey(), filter.getValue());
+        }
+        filterStrings.add(filter.toString());
+    }
+    if (String.isBlank(filterLogic))
+    {
+        return '';
+    }
+
+    List<String> filterLogicParts = filterLogic.split('\\s+');
+    List<String> filterLogicPartsReplaced = new List<String>();
+    for (String filterLogicPart : filterLogicParts)
+    {
+        Matcher m = Pattern.compile('\\d+').matcher(filterLogicPart);
+        Boolean indexFound = m.find();
+        if (indexFound)
+        {
+            Integer filterLogicIndex = Integer.valueOf(m.group());
+            try
+            {
+                filterLogicPartsReplaced.add(
+                    filterLogicPart.replace(
+                        m.group(),
+                        filterStrings[filterLogicIndex - 1]
+                    )
+                );
+            }
+            catch (ListException e)
+            {
+                throw new QueryException('No query ' + clause + ' filter defined for index "' + filterLogicIndex + '" specified in filter conditions "' + filterLogic + '"');
+            }
+        }
+        else
+        {
+            filterLogicPartsReplaced.add(filterLogicPart);
+        }
+    }
+    return ' ' + clause + ' ' + String.join(filterLogicPartsReplaced, ' ');
+  }
+
   protected String doGetWhereClauseString()
   {
-    this.whereFilters.sort();
-    return this.whereFilters.isEmpty() ? '' : ' WHERE ' + String.join(this.whereFilters, ' AND ');
+    return this.doGetFilterableClauseString('WHERE', this.whereClauseFilters, this.whereClauseFilterLogic);
   }
 
   protected System.AccessLevel doGetAccessLevel()
@@ -663,13 +744,15 @@ global abstract class SOQL implements Comparable {
     }
   }
 
-  global class QueryFilter implements Comparable {
-    private SOQL.QueryField queryField;
-    private SOQL.Operator operator;
-    private Object value;
-    private String formattedValue;
-    private String filterString;
-    private String bindKey;
+  global virtual class QueryFilter implements Comparable {
+    protected SOQL.QueryField queryField;
+    protected SOQL.Operator operator;
+    protected Object value;
+    protected String bindKey;
+    protected Schema.SObjectType childSObjectType;
+    protected Query childQuery;
+    protected Boolean inOrNotIn;
+    protected Schema.SObjectField lookupFieldOnChildSObject;
 
     global QueryFilter(Schema.SObjectField field, SOQL.Operator operator, Object value)
     {
@@ -691,22 +774,23 @@ global abstract class SOQL implements Comparable {
       this.queryField = queryField;
       this.operator = operator;
       this.value = value;
-      this.formattedValue = (String.isNotBlank(bindKey) ? ':' + bindKey : new QueryArgument(value).toString());
       this.bindKey = bindKey;
-
-      this.filterString = queryField + ' ' + SOQL.getOperatorValue(operator) + ' ' + formattedValue;
     }
 
     global QueryFilter(Schema.SObjectType childSObjectType, Boolean inOrNotIn, Schema.SObjectField lookupFieldOnChildSObject)
     {
       this.operator = inOrNotIn ? SOQL.Operator.IS_IN : SOQL.Operator.IS_NOT_IN;
-      this.filterString = 'Id ' + SOQL.getOperatorValue(this.operator) + ' (SELECT ' + lookupFieldOnChildSObject + ' FROM ' + childSObjectType + ')';
+      this.childSObjectType = childSObjectType;
+      this.inOrNotIn = inOrNotIn;
+      this.lookupFieldOnChildSObject = lookupFieldOnChildSObject;
     }
 
     global QueryFilter(Query childQuery, Boolean inOrNotIn, Schema.SObjectField lookupFieldOnChildSObject)
     {
       this.operator = inOrNotIn ? SOQL.Operator.IS_IN : SOQL.Operator.IS_NOT_IN;
-      this.filterString = 'Id ' + SOQL.getOperatorValue(this.operator) + ' ' + childQuery.getSubquery(lookupFieldOnChildSObject);
+      this.childQuery = childQuery;
+      this.inOrNotIn = inOrNotIn;
+      this.lookupFieldOnChildSObject = lookupFieldOnChildSObject;
     }
 
     global Integer compareTo(Object compareTo)
@@ -742,16 +826,35 @@ global abstract class SOQL implements Comparable {
       return this.value;
     }
 
-    // TODO decide if this should be global
-    public Object getFormattedValue()
-    {
-      return this.formattedValue;
+    global String getBindKey() {
+      return this.bindKey;
+    }
+
+    global void setBindKey(String bindKey) {
+      if (this.queryField != null)
+      {
+        this.bindKey = bindKey;
+      }
     }
 
     // TODO decide if this should be global
-    public override String toString()
+    public Object getFormattedValue()
     {
-      return this.filterString;
+      return (String.isNotBlank(this.bindKey) ? ':' + this.bindKey : new QueryArgument(this.value).toString());
+    }
+
+    // TODO decide if this should be global
+    public virtual override String toString()
+    {
+      return (
+        this.queryField != null ?
+        this.queryField + ' ' + SOQL.getOperatorValue(this.operator) + ' ' + this.getFormattedValue() :
+        (
+            this.childSObjectType != null ?
+            'Id ' + SOQL.getOperatorValue(this.operator) + ' (SELECT ' + this.lookupFieldOnChildSObject + ' FROM ' + this.childSObjectType + ')' :
+            'Id ' + SOQL.getOperatorValue(this.operator) + ' ' + this.childQuery.getSubquery(this.lookupFieldOnChildSObject)
+        )
+      );
     }
   }
 
