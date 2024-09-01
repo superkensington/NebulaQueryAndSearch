@@ -282,9 +282,9 @@ global abstract class SOQL implements Comparable {
 
   protected String doOrFilter(List<SOQL.QueryFilter> newFilters, List<SOQL.QueryFilter> clauseFilters, String filterLogic)
   {
-    if (filters?.isEmpty() != false)
+    if (newFilters?.isEmpty() != false)
     {
-      return;
+      return filterLogic;
     }
 
     newFilters.sort();
