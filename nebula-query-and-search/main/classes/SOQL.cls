@@ -511,6 +511,7 @@ global abstract class SOQL implements Comparable {
     return this.doGetFilterableClauseString('WHERE', this.whereClauseFilters, this.whereClauseFilterLogic);
   }
 
+  @TestVisible
   protected System.AccessLevel doGetAccessLevel()
   {
     return this.accessLevel ?? System.AccessLevel.SYSTEM_MODE;
@@ -531,6 +532,7 @@ global abstract class SOQL implements Comparable {
     return this.offset == null ? '' : ' OFFSET ' + this.offset;
   }
 
+  @TestVisible
   protected Map<String, Object> doGetBindsMap()
   {
     return this.bindsMap ?? new Map<String, Object>();
