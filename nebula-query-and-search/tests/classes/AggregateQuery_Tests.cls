@@ -308,9 +308,9 @@ private class AggregateQuery_Tests {
         aggregateQuery.generateBindVariableKeys();
 
         // VERIFY
+        System.Assert.areEqual(expectedQueryString, aggregateQuery.getQuery()); // Below assertions will fail if made before query string is generated
         System.Assert.isTrue(aggregateQuery.doGetBindsMap().containsKey('bindVar0'), 'generated bind key exists');
         System.Assert.areEqual(expectedBindValue, aggregateQuery.doGetBindsMap().get('bindVar0'), 'bind value');
-        System.Assert.areEqual(expectedQueryString, aggregateQuery.getQuery());
     }
 
     @isTest
@@ -327,9 +327,9 @@ private class AggregateQuery_Tests {
         aggregateQuery.generateBindVariableKeys();
 
         // VERIFY
+        System.Assert.areEqual(expectedQueryString, aggregateQuery.getQuery()); // Below assertions will fail if made before query string is generated
         System.Assert.isTrue(aggregateQuery.doGetBindsMap().containsKey('bindVar0'), 'generated bind key exists');
         System.Assert.areEqual(expectedBindValue, aggregateQuery.doGetBindsMap().get('bindVar0'), 'bind value');
-        System.Assert.areEqual(expectedQueryString, aggregateQuery.getQuery());
     }
 
     @isTest
