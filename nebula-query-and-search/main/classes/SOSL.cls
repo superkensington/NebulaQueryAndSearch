@@ -33,6 +33,10 @@ global abstract class SOSL {
 
   private static Map<Integer, List<List<SObject>>> cachedSearchResultsByHashCode = new Map<Integer, List<List<SObject>>>();
 
+  private static List<List<List<SObject>>> mockResults {
+    get { return (Test.isRunningTest() ? mockResults : null); }
+    set { if (Test.isRunningTest()) { mockResults = value; } }
+  }
   protected String searchQuery;
   protected String searchTerm;
   protected List<Query> sobjectQueries;
@@ -81,6 +85,16 @@ global abstract class SOSL {
   // TODO decide if this should be global
   global abstract String getSearch();
 
+  @TestVisible
+  private static void mockResults(List<List<SObject>> results)
+  {
+    if (mockResults == null)
+    {
+        mockResults = new List<List<List<SObject>>>();
+    }
+    mockResults.add(results);
+  }
+
   protected SObject doGetFirstResult()
   {
     List<List<SObject>> results = this.doGetResults();
@@ -95,6 +109,10 @@ global abstract class SOSL {
 
   protected List<List<SObject>> doGetResults()
   {
+    if (mockResults != null)
+    {
+        return mockResults.remove(0);
+    }
     if (this.cacheResults)
     {
       return this.getCachedResults();
@@ -143,6 +161,7 @@ global abstract class SOSL {
     this.accessLevel = accessLevel;
   }
 
+  @TestVisible
   protected System.AccessLevel doGetAccessLevel()
   {
     return this.accessLevel ?? System.AccessLevel.SYSTEM_MODE;

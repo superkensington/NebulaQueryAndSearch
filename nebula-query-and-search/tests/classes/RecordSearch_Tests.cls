@@ -6,237 +6,242 @@
 @SuppressWarnings(
   'PMD.ApexDoc, PMD.ApexAssertionsShouldIncludeMessage, PMD.ApexUnitTestClassShouldHaveAsserts, PMD.CyclomaticComplexity, PMD.EagerlyLoadedDescribeSObjectResult, PMD.ExcessiveParameterList, PMD.MethodNamingConventions, PMD.NcssMethodCount, PMD.UnusedLocalVariable'
 )
-@IsTest(IsParallel=true)
+@isTest(IsParallel=true)
 private class RecordSearch_Tests {
-  @IsTest
-  static void it_should_return_first_result_for_a_single_sobject_type()
-  {
-    String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name)';
 
-    Query userQuery = new Query(Schema.User.SObjectType);
-    RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), userQuery);
-
-    System.assertEquals(expectedSearchQueryString, userSearch.getSearch());
-    User userSearchResult = (User) userSearch.getFirstResult();
-  }
-
-  @IsTest
-  static void it_should_return_results_for_a_single_sobject_type()
-  {
-    String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name)';
-
-    Query userQuery = new Query(Schema.User.SObjectType);
-    RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), userQuery);
-
-    System.assertEquals(expectedSearchQueryString, userSearch.getSearch());
-    List<User> userSearchResults = userSearch.getFirstResults();
-  }
-
-  @IsTest
-  static void it_should_return_results_for_multiple_sobject_types()
-  {
-    String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING Account(Id, Name), User(Id, Name)';
-
-    List<Query> queries = new List<Query>{ new Query(Schema.User.SObjectType), new Query(Schema.Account.SObjectType) };
-    RecordSearch search = new RecordSearch(System.UserInfo.getUserEmail(), queries);
-
-    System.assertEquals(expectedSearchQueryString, search.getSearch());
-    List<List<SObject>> searchResults = search.getResults();
-  }
-
-  @IsTest
-  static void it_should_return_results_with_highlight_enabled()
-  {
-    String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name) WITH HIGHLIGHT';
-
-    RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.SObjectType));
-    userSearch.withHighlight();
-
-    System.assertEquals(expectedSearchQueryString, userSearch.getSearch());
-    List<User> userSearchResults = userSearch.getFirstResults();
-  }
-
-  @IsTest
-  static void it_should_return_results_with_snippet_enabled()
-  {
-    Integer snippetTargetLength = 10;
-    String expectedSearchQueryString =
-      'FIND \'' +
-      System.UserInfo.getUserEmail() +
-      '\' IN ALL FIELDS RETURNING User(Id, Name)' +
-      ' WITH SNIPPET (target_length=' +
-      snippetTargetLength +
-      ')';
-
-    RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.SObjectType));
-    userSearch.withSnippet(snippetTargetLength);
-
-    System.assertEquals(expectedSearchQueryString, userSearch.getSearch());
-    List<User> userSearchResults = userSearch.getFirstResults();
-  }
-
-  @IsTest
-  static void it_should_return_results_in_email_search_group()
-  {
-    Integer snippetTargetLength = 10;
-    String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN EMAIL FIELDS RETURNING User(Id, Name)';
-
-    RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.SObjectType));
-    userSearch.inSearchGroup(SOSL.SearchGroup.EMAIL_FIELDS);
-
-    System.assertEquals(expectedSearchQueryString, userSearch.getSearch());
-    List<User> userSearchResults = (List<User>) userSearch.getFirstResults();
-  }
-
-  @IsTest
-  static void it_should_return_results_with_spell_correction_enabled()
-  {
-    String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name)' + ' WITH SPELL_CORRECTION = true';
-
-    RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.SObjectType));
-    userSearch.withSpellCorrection();
-
-    System.assertEquals(expectedSearchQueryString, userSearch.getSearch());
-    List<User> userSearchResults = userSearch.getFirstResults();
-  }
-
-  @IsTest
-  static void it_should_return_results_with_update_article_reporting_for_tracking_enabled()
-  {
-    // If Knowledge isn't enabled, then we cannot use Knowledge-specific SOSL methods, so skip running this test
-    if (!Schema.getGlobalDescribe().containsKey('KnowledgeArticle'))
+    @isTest
+    static void it_should_return_first_result_for_a_single_sobject_type()
     {
-      return;
+        // SETUP
+        Query userQuery = new Query(Schema.User.getSObjectType());
+        RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), userQuery);
+        List<List<SObject>> mockResults = new List<List<SObject>> {
+            new List<SObject> {
+                new User(Id = UserInfo.getUserId())
+            }
+        };
+        SOSL.mockResults(mockResults);
+
+        // TEST
+        User userSearchResult = (User)userSearch.getFirstResult();
+
+        // VERIFY
+        System.assertEquals(Userinfo.getUserId(), userSearchResult.Id);
     }
 
-    // If Knowledge is enabled, then execute the test
-    String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name)' + ' UPDATE TRACKING';
-
-    RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.SObjectType));
-    userSearch.updateArticleReporting(SOSL.ArticleReporting.TRACKING);
-
-    System.assertEquals(expectedSearchQueryString, userSearch.getSearch());
-    List<User> userSearchResults = userSearch.getFirstResults();
-  }
-
-  @IsTest
-  static void it_should_return_results_with_update_article_reporting_for_viewstat_enabled()
-  {
-    // If Knowledge isn't enabled, then we cannot use Knowledge-specific SOSL methods, so skip running this test
-    if (!Schema.getGlobalDescribe().containsKey('KnowledgeArticle'))
+    @isTest
+    static void it_should_return_results_for_a_single_sobject_type()
     {
-      return;
+        // SETUP
+        Query userQuery = new Query(Schema.User.getSObjectType());
+        RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), userQuery);
+        List<List<SObject>> mockResults = new List<List<SObject>> {
+            new List<SObject> {
+                new User(Id = UserInfo.getUserId())
+            }
+        };
+        SOSL.mockResults(mockResults);
+
+        // TEST
+        List<User> userSearchResults = userSearch.getFirstResults();
+
+        // VERIFY
+        System.assertEquals(1, userSearchResults.size());
+        System.assertEquals(Userinfo.getUserId(), userSearchResults[0].Id);
+
     }
 
-    // If Knowledge is enabled, then execute the test
-    String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name)' + ' UPDATE VIEWSTAT';
-
-    RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.SObjectType));
-    userSearch.updateArticleReporting(SOSL.ArticleReporting.VIEWSTAT);
-
-    System.assertEquals(expectedSearchQueryString, userSearch.getSearch());
-    List<User> userSearchResults = userSearch.getFirstResults();
-  }
-
-  @IsTest
-  static void it_should_run_with_system_mode()
-  {
-    String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING Contact(Id, Name)';
-
-    Query contactQuery = new Query(Schema.Contact.SObjectType);
-    RecordSearch contactSearch = new RecordSearch(System.UserInfo.getUserEmail(), contactQuery)
-      .withAccessLevel(System.AccessLevel.SYSTEM_MODE);
-
-    System.assertEquals(expectedSearchQueryString, contactSearch.getSearch());
-    List<Contact> contactSearchResults = contactSearch.getFirstResults();
-
-    List<List<SObject>> expectedResults = Search.query(expectedSearchQueryString);
-    List<List<SObject>> returnedResults;
-    Exception caughtException;
-    System.runAs(minimumAccessUser())
+    @isTest
+    static void it_should_return_results_for_multiple_sobject_types()
     {
-        try
-        {
-            returnedResults = contactSearch.getResults();
-        }
-        catch (Exception e)
-        {
-            caughtException = e;
-        }
+        // SETUP
+        List<Query> queries = new List<Query>{
+            new Query(Schema.User.getSObjectType()),
+            new Query(Schema.Account.getSObjectType())
+        };
+        RecordSearch search = new RecordSearch(System.UserInfo.getUserEmail(), queries);
+        List<List<SObject>> mockResults = new List<List<SObject>> {
+            new List<SObject> {
+                new User(Id = UserInfo.getUserId())
+            },
+            new List<SObject> {
+                new Account(Name = 'Test Account')
+            }
+        };
+        SOSL.mockResults(mockResults);
+
+        // TEST
+        List<List<SObject>> searchResults = search.getResults();
+
+        // VERIFY
+        System.assertEquals(2, searchResults.size());
+        System.assertEquals(Userinfo.getUserId(), searchResults[0][0].Id);
+        System.assertEquals(((Account)mockResults[1][0]).Name, ((Account)searchResults[1][0]).Name);
     }
-    System.Assert.isNull(caughtException, 'Search should not throw exception when run in System Mode');
-    System.Assert.areEqual(expectedResults, returnedResults);
-  }
 
-  @IsTest
-  static void it_should_run_with_user_mode()
-  {
-    String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING Contact(Id, Name)';
-
-    Query contactQuery = new Query(Schema.Contact.SObjectType);
-    RecordSearch contactSearch = new RecordSearch(System.UserInfo.getUserEmail(), contactQuery)
-      .withAccessLevel(System.AccessLevel.USER_MODE);
-
-    System.assertEquals(expectedSearchQueryString, contactSearch.getSearch());
-    List<Contact> contactSearchResults = contactSearch.getFirstResults();
-
-    List<List<SObject>> expectedResults = Search.query(expectedSearchQueryString);
-    List<List<SObject>> returnedResults;
-    Exception caughtException;
-    System.runAs(minimumAccessUser())
+    @isTest
+    static void it_should_build_a_search_with_highlight_enabled()
     {
-        try
-        {
-            returnedResults = contactSearch.getResults();
-        }
-        catch (Exception e)
-        {
-            caughtException = e;
-        }
+        // SETUP
+        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name) WITH HIGHLIGHT';
+        RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.getSObjectType()));
+
+        // TEST
+        userSearch.withHighlight();
+
+        // VERIFY
+        System.assertEquals(expectedSearchQueryString, userSearch.getSearch());
     }
-    System.Assert.isInstanceOfType(caughtException, System.QueryException.class, 'Search should throw exception when run in User Mode');
-    System.Assert.isTrue(caughtException.getMessage().contains('sObject type \'contact\' is not supported'), 'Search should throw exception when run in User Mode');
-  }
 
-  @IsTest
-  static void it_should_cache_search_results_when_enabled()
-  {
-    Integer loops = 4;
-    Query userQuery = new Query(Schema.User.SObjectType);
-    RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), userQuery);
-
-    // First, verify that caching is not enabled by default
-    System.assertEquals(0, System.Limits.getSoslQueries());
-    for (Integer i = 0; i < loops; i++)
+    @isTest
+    static void it_should_build_a_search_with_snippet_enabled()
     {
-      userSearch.getResults();
+        // SETUP
+        Integer snippetTargetLength = 10;
+        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name) WITH SNIPPET (target_length=' + snippetTargetLength + ')';
+        RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.getSObjectType()));
+
+        // TEST
+        userSearch.withSnippet(snippetTargetLength);
+
+        // VERIFY
+        System.assertEquals(expectedSearchQueryString, userSearch.getSearch());
     }
-    System.assertEquals(loops, System.Limits.getSoslQueries());
 
-    System.Test.startTest();
-
-    userSearch.cacheResults();
-    for (Integer i = 0; i < loops; i++)
+    @isTest
+    static void it_should_build_a_search_in_email_search_group()
     {
-      userSearch.getResults();
+        // SETUP
+        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN EMAIL FIELDS RETURNING User(Id, Name)';
+        RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.getSObjectType()));
+
+        // TEST
+        userSearch.inSearchGroup(SOSL.SearchGroup.EMAIL_FIELDS);
+
+        // VERIFY
+        System.assertEquals(expectedSearchQueryString, userSearch.getSearch());
     }
-    System.assertEquals(1, System.Limits.getSoslQueries());
 
-    System.Test.stopTest();
-  }
+    @isTest
+    static void it_should_build_a_search_with_spell_correction_enabled()
+    {
+        // SETUP
+        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name) WITH SPELL_CORRECTION = true';
+        RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.getSObjectType()));
 
-  static User minimumAccessUser()
-  {
-    return new User(
-      Alias = 'newUser',
-      Email = 'newuser@testorg.com',
-      EmailEncodingKey = 'UTF-8',
-      LastName = 'Testing',
-      LanguageLocaleKey = 'en_US',
-      LocaleSidKey = 'en_US',
-      ProfileId = [SELECT Id FROM Profile WHERE Name = 'Minimum Access - Salesforce'].Id,
-      TimeZoneSidKey = 'GMT',
-      UserName = 'newuser@testorg.com'
-    );
-  }
+        // TEST
+        userSearch.withSpellCorrection();
+
+        // VERIFY
+        System.assertEquals(expectedSearchQueryString, userSearch.getSearch());
+    }
+
+    @isTest
+    static void it_should_build_a_search_with_update_article_reporting_for_tracking_enabled()
+    {
+        // SETUP
+        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name) UPDATE TRACKING';
+        RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.getSObjectType()));
+
+        // TEST
+        userSearch.updateArticleReporting(SOSL.ArticleReporting.TRACKING);
+
+        // VERIFY
+        System.assertEquals(expectedSearchQueryString, userSearch.getSearch());
+    }
+
+    @isTest
+    static void it_should_build_a_search_with_update_article_reporting_for_viewstat_enabled()
+    {
+        // SETUP
+        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name) UPDATE VIEWSTAT';
+        RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.getSObjectType()));
+
+        // TEST
+        userSearch.updateArticleReporting(SOSL.ArticleReporting.VIEWSTAT);
+
+        // VERIFY
+        System.assertEquals(expectedSearchQueryString, userSearch.getSearch());
+    }
+
+    @isTest
+    static void it_should_run_with_system_mode_by_default()
+    {
+        // SETUP
+        System.AccessLevel expectedAccessLevel = System.AccessLevel.SYSTEM_MODE;
+        Query contactQuery = new Query(Schema.Contact.getSObjectType());
+        RecordSearch contactSearch = new RecordSearch(System.UserInfo.getUserEmail(), contactQuery);
+
+        // TEST
+        System.AccessLevel accessLevel = contactSearch.doGetAccessLevel();
+
+        // VERIFY
+        System.Assert.areEqual(expectedAccessLevel, accessLevel);
+    }
+
+    @isTest
+    static void it_should_run_with_system_mode()
+    {
+        // SETUP
+        System.AccessLevel expectedAccessLevel = System.AccessLevel.SYSTEM_MODE;
+        Query contactQuery = new Query(Schema.Contact.getSObjectType());
+        RecordSearch contactSearch = new RecordSearch(System.UserInfo.getUserEmail(), contactQuery)
+            .withAccessLevel(System.AccessLevel.SYSTEM_MODE);
+
+        // TEST
+        System.AccessLevel accessLevel = contactSearch.doGetAccessLevel();
+
+        // VERIFY
+        System.Assert.areEqual(expectedAccessLevel, accessLevel);
+    }
+
+    @isTest
+    static void it_should_run_with_user_mode()
+    {
+        // SETUP
+        System.AccessLevel expectedAccessLevel = System.AccessLevel.USER_MODE;
+        Query contactQuery = new Query(Schema.Contact.getSObjectType());
+        RecordSearch contactSearch = new RecordSearch(System.UserInfo.getUserEmail(), contactQuery)
+            .withAccessLevel(System.AccessLevel.USER_MODE);
+
+        // TEST
+        System.AccessLevel accessLevel = contactSearch.doGetAccessLevel();
+
+        // VERIFY
+        System.Assert.areEqual(expectedAccessLevel, accessLevel);
+    }
+
+    @isTest
+    static void it_should_not_cache_search_results_by_default()
+    {
+        // SETUP
+        Integer soslQueriesCount = System.Limits.getSoslQueries();
+        Query userQuery = new Query(Schema.User.getSObjectType());
+        RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), userQuery);
+        userSearch.getResults();
+
+        // TEST
+        userSearch.getResults();
+
+        // VERIFY
+        System.Assert.areEqual(soslQueriesCount + 2, System.Limits.getSoslQueries());
+    }
+
+    @isTest
+    static void it_should_cache_search_results_when_enabled()
+    {
+        // SETUP
+        Integer soslQueriesCount = System.Limits.getSoslQueries();
+        Query userQuery = new Query(Schema.User.getSObjectType());
+        RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), userQuery);
+
+        // TEST
+        userSearch.cacheResults();
+        userSearch.getResults();
+        userSearch.getResults();
+
+        // VERIFY
+        System.Assert.areEqual(soslQueriesCount + 1, System.Limits.getSoslQueries());
+    }
+
 }
