@@ -131,49 +131,24 @@ global abstract class SOQL implements Comparable {
 
     private static Map<Integer, List<SObject>> cachedResultsByHashCode = new Map<Integer, List<SObject>>();
 
+    private static final Map<SOQL.Operator, String> operatorValueMap = new Map<SOQL.Operator, String> {
+        SOQL.Operator.EQUALS => '=',
+        SOQL.Operator.NOT_EQUAL_TO => '!=',
+        SOQL.Operator.GREATER_THAN => '>',
+        SOQL.Operator.GREATER_THAN_OR_EQUAL_TO => '>=',
+        SOQL.Operator.LESS_THAN => '<',
+        SOQL.Operator.LESS_THAN_OR_EQUAL_TO => '<=',
+        SOQL.Operator.IS_IN => 'IN',
+        SOQL.Operator.IS_NOT_IN => 'NOT IN',
+        SOQL.Operator.INCLUDES => 'INCLUDES',
+        SOQL.Operator.EXCLUDES => 'EXCLUDES',
+        SOQL.Operator.IS_LIKE => 'LIKE',
+        SOQL.Operator.IS_NOT_LIKE => 'NOT LIKE'
+    };
+
     public static String getOperatorValue(SOQL.Operator operator)
     {
-        switch on operator {
-            when EQUALS {
-                return '=';
-            }
-            when NOT_EQUAL_TO {
-                return '!=';
-            }
-            when GREATER_THAN {
-                return '>';
-            }
-            when GREATER_THAN_OR_EQUAL_TO {
-                return '>=';
-            }
-            when LESS_THAN {
-                return '<';
-            }
-            when LESS_THAN_OR_EQUAL_TO {
-                return '<=';
-            }
-            when IS_IN {
-                return 'IN';
-            }
-            when IS_NOT_IN {
-                return 'NOT IN';
-            }
-            when INCLUDES {
-                return 'INCLUDES';
-            }
-            when EXCLUDES {
-                return 'EXCLUDES';
-            }
-            when IS_LIKE {
-                return 'LIKE';
-            }
-            when IS_NOT_LIKE {
-                return 'NOT LIKE';
-            }
-            when else {
-                return null;
-            }
-        }
+        return operatorValueMap.get(operator);
     }
 
     protected String query;
