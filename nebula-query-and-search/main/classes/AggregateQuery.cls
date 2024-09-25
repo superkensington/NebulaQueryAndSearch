@@ -264,17 +264,17 @@ global class AggregateQuery extends SOQL {
         return this;
     }
 
-    global AggregateQuery removeBind(String key)
-    {
-        super.doRemoveBind(key);
-        return this;
-    }
+    // global AggregateQuery removeBind(String key)
+    // {
+    //     super.doRemoveBind(key);
+    //     return this;
+    // }
 
-    global AggregateQuery clearBinds()
-    {
-        super.doClearBinds();
-        return this;
-    }
+    // global AggregateQuery clearBinds()
+    // {
+    //     super.doClearBinds();
+    //     return this;
+    // }
 
     global AggregateQuery generateBindVariableKeys()
     {

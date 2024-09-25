@@ -155,7 +155,7 @@ global abstract class SOQL implements Comparable {
     protected Schema.SObjectType sObjectType;
     protected Schema.DescribeSObjectResult sObjectDescribe;
     protected Map<SOQL.QueryField, SOQL.FieldCategory> includedQueryFieldsAndCategory;
-    protected Set<SOQL.QueryField> excludedQueryFields;
+    // protected Set<SOQL.QueryField> excludedQueryFields;
     protected Scope scope;
     protected List<QueryFilter> whereClauseFilters;
     protected String whereClauseFilterLogic;
@@ -177,7 +177,7 @@ global abstract class SOQL implements Comparable {
 
         this.sobjectDescribe = this.sobjectType.getDescribe(Schema.SObjectDescribeOptions.DEFERRED);
         this.includedQueryFieldsAndCategory = new Map<SOQL.QueryField, SOQL.FieldCategory>();
-        this.excludedQueryFields = new Set<SOQL.QueryField>();
+        // this.excludedQueryFields = new Set<SOQL.QueryField>();
         this.whereClauseFilters = new List<QueryFilter>();
         this.whereClauseFilterLogic = '';
         this.orderByFieldApiNames = new List<String>();
@@ -230,11 +230,11 @@ global abstract class SOQL implements Comparable {
         this.setHasChanged();
     }
 
-    protected void doRemoveFields(List<SOQL.QueryField> queryFields)
-    {
-        this.excludedQueryFields.addAll(queryFields);
-        this.setHasChanged();
-    }
+    // protected void doRemoveFields(List<SOQL.QueryField> queryFields)
+    // {
+    //     this.excludedQueryFields.addAll(queryFields);
+    //     this.setHasChanged();
+    // }
 
     protected void doUsingScope(Scope scope)
     {
@@ -329,28 +329,28 @@ global abstract class SOQL implements Comparable {
         this.setHasChanged();
     }
 
-    protected void doRemoveBind(String key)
-    {
-        this.bindsMap.remove(key);
-        for (QueryFilter filter : this.whereClauseFilters)
-        {
-            if (filter.bindKey == key)
-            {
-                filter.bindKey = null;
-            }
-        }
-        this.setHasChanged();
-    }
+    // protected void doRemoveBind(String key)
+    // {
+    //     this.bindsMap.remove(key);
+    //     for (QueryFilter filter : this.whereClauseFilters)
+    //     {
+    //         if (filter.bindKey == key)
+    //         {
+    //             filter.bindKey = null;
+    //         }
+    //     }
+    //     this.setHasChanged();
+    // }
 
-    protected void doClearBinds()
-    {
-        this.bindsMap.clear();
-        for (QueryFilter filter : this.whereClauseFilters)
-        {
-            filter.bindKey = null;
-        }
-        this.setHasChanged();
-    }
+    // protected void doClearBinds()
+    // {
+    //     this.bindsMap.clear();
+    //     for (QueryFilter filter : this.whereClauseFilters)
+    //     {
+    //         filter.bindKey = null;
+    //     }
+    //     this.setHasChanged();
+    // }
 
     protected void doGenerateBindVariableKeys()
     {
@@ -417,10 +417,10 @@ global abstract class SOQL implements Comparable {
         }
 
         // Remove an excluded field paths
-        for (SOQL.QueryField excludedQueryField : this.excludedQueryFields)
-        {
-            distinctFieldApiNamesToQuery.remove(excludedQueryField.toString());
-        }
+        // for (SOQL.QueryField excludedQueryField : this.excludedQueryFields)
+        // {
+        //     distinctFieldApiNamesToQuery.remove(excludedQueryField.toString());
+        // }
 
         List<String> fieldApiNamesToQuery = new List<String>(distinctFieldApiNamesToQuery);
         if (this.sortQueryFields)
@@ -870,7 +870,7 @@ global abstract class SOQL implements Comparable {
             }
             else if (valueToFormat instanceof Iterable<Object>)
             {
-                return this.convertIterableToQueryString((Iterable<Object>) valueToFormat);
+                return this.convertIterableToQueryString((Iterable<Object>)valueToFormat);
             }
             else if (valueToFormat instanceof Map<Object, Object>)
             {
@@ -878,21 +878,21 @@ global abstract class SOQL implements Comparable {
             }
             else if (valueToFormat instanceof Date)
             {
-                return String.valueOf((Date) valueToFormat).left(10);
+                return String.valueOf((Date)valueToFormat).left(10);
             }
             else if (valueToFormat instanceof Datetime)
             {
-                Datetime datetimeValue = (Datetime) valueToFormat;
+                Datetime datetimeValue = (Datetime)valueToFormat;
                 return datetimeValue.format('yyyy-MM-dd\'T\'HH:mm:ss\'Z\'', 'Greenwich Mean Time');
             }
             else if (valueToFormat instanceof SObject)
             {
-                return this.wrapInSingleQuotes(((SObject) valueToFormat).Id);
+                return this.wrapInSingleQuotes(((SObject)valueToFormat).Id);
             }
             else if (valueToFormat instanceof String)
             {
                 // Escape single quotes to prevent SOQL/SOSL injection
-                String unformattedString = (String) valueToFormat;
+                String unformattedString = (String)valueToFormat;
                 String stringArgument = String.escapeSingleQuotes(unformattedString.trim());
                 return this.wrapInSingleQuotes(stringArgument);
             }
