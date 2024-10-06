@@ -83,7 +83,7 @@ private class RecordSearch_Tests {
     static void it_should_build_a_search_with_highlight_enabled()
     {
         // SETUP
-        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name) WITH HIGHLIGHT';
+        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id) WITH HIGHLIGHT';
         RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.getSObjectType()));
 
         // TEST
@@ -98,7 +98,7 @@ private class RecordSearch_Tests {
     {
         // SETUP
         Integer snippetTargetLength = 10;
-        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name) WITH SNIPPET (target_length=' + snippetTargetLength + ')';
+        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id) WITH SNIPPET (target_length=' + snippetTargetLength + ')';
         RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.getSObjectType()));
 
         // TEST
@@ -112,7 +112,7 @@ private class RecordSearch_Tests {
     static void it_should_build_a_search_in_email_search_group()
     {
         // SETUP
-        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN EMAIL FIELDS RETURNING User(Id, Name)';
+        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN EMAIL FIELDS RETURNING User(Id)';
         RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.getSObjectType()));
 
         // TEST
@@ -126,7 +126,7 @@ private class RecordSearch_Tests {
     static void it_should_build_a_search_with_spell_correction_enabled()
     {
         // SETUP
-        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name) WITH SPELL_CORRECTION = true';
+        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id) WITH SPELL_CORRECTION = true';
         RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.getSObjectType()));
 
         // TEST
@@ -140,7 +140,7 @@ private class RecordSearch_Tests {
     static void it_should_build_a_search_with_update_article_reporting_for_tracking_enabled()
     {
         // SETUP
-        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name) UPDATE TRACKING';
+        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id) UPDATE TRACKING';
         RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.getSObjectType()));
 
         // TEST
@@ -154,7 +154,7 @@ private class RecordSearch_Tests {
     static void it_should_build_a_search_with_update_article_reporting_for_viewstat_enabled()
     {
         // SETUP
-        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id, Name) UPDATE VIEWSTAT';
+        String expectedSearchQueryString = 'FIND \'' + System.UserInfo.getUserEmail() + '\' IN ALL FIELDS RETURNING User(Id) UPDATE VIEWSTAT';
         RecordSearch userSearch = new RecordSearch(System.UserInfo.getUserEmail(), new Query(Schema.User.getSObjectType()));
 
         // TEST

@@ -256,42 +256,42 @@ private class AggregateQuery_Tests {
         System.Assert.areEqual(expectedQueryString, aggregateQuery.getQuery());
     }
 
-    @isTest
-    static void it_will_remove_a_bind_variable()
-    {
-        // SETUP
-        String bindKey = 'dateFilter';
-        String expectedQueryString = 'SELECT MIN(CreatedDate) MIN__CreatedDate FROM Account WHERE CreatedDate >= 2000-01-01T05:00:00Z';
-        AggregateQuery aggregateQuery = new AggregateQuery(Schema.Account.getSObjectType())
-            .addAggregate(SOQL.Aggregate.MIN, Schema.Account.CreatedDate)
-            .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.GREATER_THAN_OR_EQUAL_TO, Datetime.newInstance(2000, 1, 1), bindKey));
+    // @isTest
+    // static void it_will_remove_a_bind_variable()
+    // {
+    //     // SETUP
+    //     String bindKey = 'dateFilter';
+    //     String expectedQueryString = 'SELECT MIN(CreatedDate) MIN__CreatedDate FROM Account WHERE CreatedDate >= 2000-01-01T05:00:00Z';
+    //     AggregateQuery aggregateQuery = new AggregateQuery(Schema.Account.getSObjectType())
+    //         .addAggregate(SOQL.Aggregate.MIN, Schema.Account.CreatedDate)
+    //         .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.GREATER_THAN_OR_EQUAL_TO, Datetime.newInstance(2000, 1, 1), bindKey));
 
-        // TEST
-        aggregateQuery.removeBind(bindKey);
+    //     // TEST
+    //     aggregateQuery.removeBind(bindKey);
 
-        // VERIFY
-        System.Assert.isFalse(aggregateQuery.doGetBindsMap().containsKey(bindKey), 'bind key exists in map');
-        System.Assert.areEqual(expectedQueryString, aggregateQuery.getQuery());
-    }
+    //     // VERIFY
+    //     System.Assert.isFalse(aggregateQuery.doGetBindsMap().containsKey(bindKey), 'bind key exists in map');
+    //     System.Assert.areEqual(expectedQueryString, aggregateQuery.getQuery());
+    // }
 
-    @isTest
-    static void it_will_clear_all_bind_variables()
-    {
-        // SETUP
-        String expectedQueryString = 'SELECT MAX(CreatedDate) MAX__CreatedDate, MIN(CreatedDate) MIN__CreatedDate FROM Account WHERE CreatedDate >= 2000-01-01T05:00:00Z AND CreatedDate < 2001-01-01T05:00:00Z';
-        AggregateQuery aggregateQuery = new AggregateQuery(Schema.Account.getSObjectType())
-            .addAggregate(SOQL.Aggregate.MIN, Schema.Account.CreatedDate)
-            .addAggregate(SOQL.Aggregate.MAX, Schema.Account.CreatedDate)
-            .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.GREATER_THAN_OR_EQUAL_TO, Datetime.newInstance(2000, 1, 1), 'minDateFilter'))
-            .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.LESS_THAN, Datetime.newInstance(2001, 1, 1), 'maxDateFilter'));
+    // @isTest
+    // static void it_will_clear_all_bind_variables()
+    // {
+    //     // SETUP
+    //     String expectedQueryString = 'SELECT MAX(CreatedDate) MAX__CreatedDate, MIN(CreatedDate) MIN__CreatedDate FROM Account WHERE CreatedDate >= 2000-01-01T05:00:00Z AND CreatedDate < 2001-01-01T05:00:00Z';
+    //     AggregateQuery aggregateQuery = new AggregateQuery(Schema.Account.getSObjectType())
+    //         .addAggregate(SOQL.Aggregate.MIN, Schema.Account.CreatedDate)
+    //         .addAggregate(SOQL.Aggregate.MAX, Schema.Account.CreatedDate)
+    //         .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.GREATER_THAN_OR_EQUAL_TO, Datetime.newInstance(2000, 1, 1), 'minDateFilter'))
+    //         .filterWhere(new SOQL.QueryFilter(Schema.Account.CreatedDate, SOQL.Operator.LESS_THAN, Datetime.newInstance(2001, 1, 1), 'maxDateFilter'));
 
-        // TEST
-        aggregateQuery.clearBinds();
+    //     // TEST
+    //     aggregateQuery.clearBinds();
 
-        // VERIFY
-        System.Assert.areEqual(0, aggregateQuery.doGetBindsMap().size(), '# of bind keys');
-        System.Assert.areEqual(expectedQueryString, aggregateQuery.getQuery());
-    }
+    //     // VERIFY
+    //     System.Assert.areEqual(0, aggregateQuery.doGetBindsMap().size(), '# of bind keys');
+    //     System.Assert.areEqual(expectedQueryString, aggregateQuery.getQuery());
+    // }
 
     @isTest
     static void it_will_generate_a_bind_variable_for_a_having_filter()

@@ -651,13 +651,13 @@ global class Query extends SOQL {
         // If the field is a lookup, then we need to get the name field from the parent object
         if (queryField.getDescribe().getType().name() == 'REFERENCE')
         {
-            if (queryField.getDescribe().isNamePointing())
-            {
-                String fieldPath = queryField.getFieldPath();
-                Integer indx = fieldPath.lastIndexOf(queryField.getDescribe().getName());
-                String parentTypeFieldPath = fieldPath.substring(0, indx) + queryField.getDescribe().getRelationshipName() + '.Type';
-                fieldsToReturn.add(parentTypeFieldPath);
-            }
+            // if (queryField.getDescribe().isNamePointing())
+            // {
+            //     String fieldPath = queryField.getFieldPath();
+            //     Integer indx = fieldPath.lastIndexOf(queryField.getDescribe().getName());
+            //     String parentTypeFieldPath = fieldPath.substring(0, indx) + queryField.getDescribe().getRelationshipName() + '.Type';
+            //     fieldsToReturn.add(parentTypeFieldPath);
+            // }
 
             // String parentNameField = this.getParentSObjectNameField(queryField.getDescribe());
             // if (parentNameField != null)
